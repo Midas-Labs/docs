@@ -1,0 +1,168 @@
+---
+title: "Venue setup"
+description: "Configure tenants, locations, and venue settings"
+---
+
+Tenants represent your business entity. Locations represent physical venues within a tenant. This guide covers setting up both.
+
+## Tenants
+
+A tenant is the top-level container for all your data — customers, products, bookings, and staff belong to a tenant.
+
+### List tenants
+
+```bash
+curl https://api.platform.io/v1/tenants \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Get tenant details
+
+```bash
+curl https://api.platform.io/v1/tenants/ten_abc123 \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Update tenant
+
+```bash
+curl -X PUT https://api.platform.io/v1/tenants/ten_abc123 \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "SpeedZone Racing",
+    "website": "https://speedzone.example.com",
+    "support_email": "support@speedzone.example.com"
+  }'
+```
+
+### Tenant settings
+
+Configure MFA, SSO, timezone, currency, and feature flags:
+
+```bash
+curl https://api.platform.io/v1/tenants/ten_abc123/settings \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+```json
+{
+  "timezone": "America/Chicago",
+  "currency": "usd",
+  "mfa_required": false,
+  "sso_enabled": false,
+  "feature_flags": {
+    "walk_in_enabled": true,
+    "waitlist_enabled": true,
+    "loyalty_enabled": true
+  }
+}
+```
+
+Update specific settings (merges with existing):
+
+```bash
+curl -X PUT https://api.platform.io/v1/tenants/ten_abc123/settings \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "mfa_required": true,
+    "timezone": "America/New_York"
+  }'
+```
+
+---
+
+## Locations
+
+Locations are physical venues within a tenant. Each location has its own schedules, resources, and staff.
+
+### Create a location
+
+```bash
+curl -X POST https://api.platform.io/v1/locations \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: loc-create-001" \
+  -d '{
+    "name": "SpeedZone Austin",
+    "address": {
+      "line1": "1234 Racing Blvd",
+      "city": "Austin",
+      "state": "TX",
+      "postal_code": "78701",
+      "country": "US"
+    },
+    "timezone": "America/Chicago",
+    "phone": "+15125551234",
+    "email": "austin@speedzone.example.com"
+  }'
+```
+
+```json
+{
+  "id": "loc_austin",
+  "object": "location",
+  "name": "SpeedZone Austin",
+  "status": "active",
+  "created_at": "2025-04-01T12:00:00Z"
+}
+```
+
+### List locations
+
+```bash
+curl https://api.platform.io/v1/locations \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Update a location
+
+```bash
+curl -X PUT https://api.platform.io/v1/locations/loc_austin \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "SpeedZone Austin - South",
+    "phone": "+15125559999"
+  }'
+```
+
+### Delete a location
+
+Soft-deletes the location and its associated schedules and resources:
+
+```bash
+curl -X DELETE https://api.platform.io/v1/locations/loc_austin \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+<Warning>Deleting a location also removes its schedules and resources. Existing bookings at the location are not automatically cancelled.</Warning>
+
+## Setup checklist
+
+A typical setup sequence for a new venue:
+
+<Steps>
+<Step title="Create the tenant">
+  Set your business name, contact details, and default currency.
+</Step>
+<Step title="Configure tenant settings">
+  Set timezone, enable MFA if required, configure feature flags.
+</Step>
+<Step title="Create locations">
+  Add each physical venue with address and contact details.
+</Step>
+<Step title="Add products">
+  Create bookable activities for each location. See [Products and catalog](/tutorials/products-catalog).
+</Step>
+<Step title="Set up schedules">
+  Define operating hours and slot templates. See [Scheduling and availability](/tutorials/scheduling-availability).
+</Step>
+<Step title="Create resources">
+  Add bookable assets (lanes, rooms, karts). See [Scheduling and availability](/tutorials/scheduling-availability).
+</Step>
+<Step title="Invite staff">
+  Create user accounts and assign roles. See [Staff management](/tutorials/staff-management).
+</Step>
+</Steps>
