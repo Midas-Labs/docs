@@ -1,0 +1,141 @@
+---
+title: "Multi-venue organizations"
+description: "Manage organizations, tenant groups, settings cascade, and consolidated reporting"
+---
+
+Organizations sit above tenants in the hierarchy. They let franchise operators and multi-venue businesses manage groups of venues from a single control plane. This guide covers org structure, tenant groups, settings propagation, and cross-venue reporting.
+
+## Hierarchy
+
+```
+Organization (e.g., SpeedZone Corp)
+├── Tenant Group (e.g., Texas Region)
+│   ├── Tenant (SpeedZone Austin)
+│   └── Tenant (SpeedZone Dallas)
+└── Tenant Group (e.g., Florida Region)
+    ├── Tenant (SpeedZone Miami)
+    └── Tenant (SpeedZone Orlando)
+```
+
+## Create an organization
+
+```bash
+curl -X POST https://api.platform.io/v1/organizations \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: org-create-001" \
+  -d '{
+    "name": "SpeedZone Corp",
+    "billing_email": "billing@speedzone.example.com"
+  }'
+```
+
+## Tenant groups
+
+Group tenants by region, brand, or any organizational structure.
+
+### Create a tenant group
+
+```bash
+curl -X POST https://api.platform.io/v1/organizations/org_speedzone/tenant-groups \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: tg-create-001" \
+  -d '{
+    "name": "Texas Region"
+  }'
+```
+
+### Add a tenant to a group
+
+```bash
+curl -X POST https://api.platform.io/v1/organizations/org_speedzone/tenant-groups/tg_texas/tenants \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: tg-add-tenant-001" \
+  -d '{
+    "tenant_id": "ten_austin"
+  }'
+```
+
+### Remove a tenant from a group
+
+```bash
+curl -X DELETE https://api.platform.io/v1/organizations/org_speedzone/tenant-groups/tg_texas/tenants/ten_austin \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### View the full hierarchy
+
+```bash
+curl https://api.platform.io/v1/organizations/org_speedzone/tree \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+Returns the entire organization tree — groups, tenants, and their relationships.
+
+## Settings cascade
+
+Organization-level settings cascade down to child tenants. Individual tenants can override inherited settings.
+
+### View cascaded settings
+
+```bash
+curl https://api.platform.io/v1/organizations/org_speedzone/settings \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Update org-level settings
+
+```bash
+curl -X PUT https://api.platform.io/v1/organizations/org_speedzone/settings \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "default_currency": "usd",
+    "mfa_required": true,
+    "branding": {
+      "primary_color": "#df272d",
+      "logo_url": "https://cdn.speedzone.example.com/logo.png"
+    }
+  }'
+```
+
+### Push settings to all child tenants
+
+Propagate settings changes across the entire organization asynchronously:
+
+```bash
+curl -X POST https://api.platform.io/v1/organizations/org_speedzone/settings/push \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: settings-push-001" \
+  -d '{
+    "keys": ["mfa_required", "branding"]
+  }'
+```
+
+This returns `202 Accepted` — the push happens asynchronously. Omit `keys` to push all settings.
+
+<Note>Tenant-level overrides are preserved unless the pushed key explicitly replaces them.</Note>
+
+## Consolidated reporting
+
+Get aggregated metrics across all tenants in the organization:
+
+```bash
+curl "https://api.platform.io/v1/organizations/org_speedzone/reports?start_date=2025-04-01&end_date=2025-04-30" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+Reports include revenue, booking counts, customer growth, and other KPIs rolled up across all tenants in the organization.
+
+## Access control
+
+Organization endpoints are accessed via the **Admin API** (`api-admin.platform.io`) and require platform administrator credentials. These are separate from tenant-level API keys.
+
+| Role | Scope |
+|------|-------|
+| **Org admin** | Full access to the organization and all child tenants |
+| **Group admin** | Manage tenants within their assigned group |
+| **Tenant admin** | Manage their own tenant only (cannot see org-level data) |

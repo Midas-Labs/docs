@@ -1,0 +1,189 @@
+---
+title: "Staff management"
+description: "Manage users, roles, permissions, and time clock entries"
+---
+
+Staff users operate your venue — managing bookings, running the POS, starting heats, and more. This guide covers creating users, assigning roles, and tracking time.
+
+## Users
+
+### Create a staff user
+
+```bash
+curl -X POST https://api.platform.io/v1/users \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: user-create-001" \
+  -d '{
+    "email": "maria@speedzone.example.com",
+    "first_name": "Maria",
+    "last_name": "Garcia",
+    "role_ids": ["role_manager"],
+    "location_ids": ["loc_austin"]
+  }'
+```
+
+This triggers a provisioning workflow that creates the identity and sends a welcome email with a password setup link.
+
+### List users
+
+```bash
+curl https://api.platform.io/v1/users \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Update a user
+
+```bash
+curl -X PUT https://api.platform.io/v1/users/usr_maria \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "location_ids": ["loc_austin", "loc_dallas"]
+  }'
+```
+
+### Deactivate a user
+
+Deactivates the account and revokes all active sessions:
+
+```bash
+curl -X DELETE https://api.platform.io/v1/users/usr_maria \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+---
+
+## Roles and permissions
+
+### Built-in roles
+
+| Role | Description |
+|------|-------------|
+| `owner` | Full access to all resources and settings |
+| `admin` | Manage users, locations, and configuration |
+| `manager` | Manage day-to-day operations at assigned locations |
+| `staff` | Operate POS, manage bookings, run heats |
+| `readonly` | View-only access to dashboards and reports |
+
+Built-in roles cannot be modified or deleted.
+
+### Create a custom role
+
+```bash
+curl -X POST https://api.platform.io/v1/roles \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: role-create-001" \
+  -d '{
+    "name": "Race Director",
+    "description": "Manages racing operations — heats, timing, leaderboards",
+    "permissions": [
+      "racing.heats.read",
+      "racing.heats.write",
+      "racing.laps.write",
+      "racing.leaderboards.read",
+      "bookings.read",
+      "bookings.check_in",
+      "customers.read"
+    ]
+  }'
+```
+
+### Update a custom role
+
+```bash
+curl -X PUT https://api.platform.io/v1/roles/role_racedir \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "permissions": [
+      "racing.heats.read",
+      "racing.heats.write",
+      "racing.laps.write",
+      "racing.leaderboards.read",
+      "racing.tracks.read",
+      "bookings.read",
+      "bookings.check_in",
+      "customers.read"
+    ]
+  }'
+```
+
+### Delete a custom role
+
+Removes the role from all assigned users:
+
+```bash
+curl -X DELETE https://api.platform.io/v1/roles/role_racedir \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+---
+
+## Time clock
+
+Track staff clock-in and clock-out for payroll and attendance.
+
+### Clock in
+
+```bash
+curl -X POST https://api.platform.io/v1/time-clock/clock-in \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: clock-in-001" \
+  -d '{
+    "location_id": "loc_austin",
+    "notes": "Opening shift"
+  }'
+```
+
+```json
+{
+  "id": "tc_abc123",
+  "object": "time_clock_entry",
+  "user_id": "usr_maria",
+  "location_id": "loc_austin",
+  "clocked_in_at": "2025-04-15T08:58:00Z",
+  "clocked_out_at": null,
+  "notes": "Opening shift"
+}
+```
+
+### Clock out
+
+```bash
+curl -X POST https://api.platform.io/v1/time-clock/tc_abc123/clock-out \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: clock-out-001" \
+  -d '{
+    "notes": "End of shift"
+  }'
+```
+
+### List time clock entries
+
+Filter by user, location, or date range:
+
+```bash
+curl "https://api.platform.io/v1/time-clock?user_id=usr_maria&start_date=2025-04-01&end_date=2025-04-15" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+<Note>Staff users can view their own entries. Admins and managers can view entries for all staff at their locations.</Note>
+
+### Admin corrections
+
+Admins can adjust clock times to fix mistakes:
+
+```bash
+curl -X PUT https://api.platform.io/v1/time-clock/tc_abc123 \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "clocked_in_at": "2025-04-15T09:00:00Z",
+    "clocked_out_at": "2025-04-15T17:00:00Z",
+    "notes": "Corrected by manager — original clock-in was 2 minutes early"
+  }'
+```

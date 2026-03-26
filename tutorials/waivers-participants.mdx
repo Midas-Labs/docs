@@ -1,0 +1,157 @@
+---
+title: "Waivers and participants"
+description: "Manage digital waiver templates, collect signatures, and track activity participants"
+---
+
+Waivers collect liability agreements before customers participate in activities. Participants are the individuals linked to a booking — often minors or group members who aren't the primary customer.
+
+## Waiver templates
+
+### Create a waiver template
+
+```bash
+curl -X POST https://api.platform.io/v1/waivers \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: waiver-create-001" \
+  -d '{
+    "name": "Racing Liability Waiver",
+    "content": "I acknowledge that go-kart racing involves inherent risks...",
+    "required_for_products": ["prod_adult_race", "prod_junior_race"],
+    "minor_requires_guardian": true
+  }'
+```
+
+### List waiver templates
+
+```bash
+curl https://api.platform.io/v1/waivers \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Update a template
+
+```bash
+curl -X PUT https://api.platform.io/v1/waivers/wvr_abc123 \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "Updated waiver text with new legal language..."
+  }'
+```
+
+### Delete a template
+
+```bash
+curl -X DELETE https://api.platform.io/v1/waivers/wvr_abc123 \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+<Note>Deleting a waiver template does not remove existing signatures. Signed records are retained for compliance.</Note>
+
+---
+
+## Collecting signatures
+
+### Sign a waiver
+
+Submit a signature for a participant:
+
+```bash
+curl -X POST https://api.platform.io/v1/waivers/wvr_abc123/sign \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: sign-001" \
+  -d '{
+    "participant_id": "ptcp_jane",
+    "signature_data": "data:image/png;base64,iVBORw0KGgo..."
+  }'
+```
+
+The `signature_data` field accepts a base64-encoded image of the signature.
+
+### List signatures for a waiver
+
+```bash
+curl "https://api.platform.io/v1/waivers/wvr_abc123/signatures?limit=20" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+Each signature record includes the participant, timestamp, and a reference to the waiver version that was signed.
+
+---
+
+## Participants
+
+Participants represent individuals who take part in an activity. A single customer booking may have multiple participants (e.g., a parent booking for three children).
+
+### Create a participant
+
+```bash
+curl -X POST https://api.platform.io/v1/participants \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: ptcp-create-001" \
+  -d '{
+    "customer_id": "cus_abc123",
+    "first_name": "Alex",
+    "last_name": "Doe",
+    "date_of_birth": "2015-06-20",
+    "relationship": "child"
+  }'
+```
+
+```json
+{
+  "id": "ptcp_alex",
+  "object": "participant",
+  "customer_id": "cus_abc123",
+  "first_name": "Alex",
+  "last_name": "Doe",
+  "date_of_birth": "2015-06-20",
+  "relationship": "child",
+  "waiver_signed": false
+}
+```
+
+### List participants
+
+```bash
+curl https://api.platform.io/v1/participants \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Update a participant
+
+```bash
+curl -X PUT https://api.platform.io/v1/participants/ptcp_alex \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "waiver_signed": true
+  }'
+```
+
+### Delete a participant
+
+```bash
+curl -X DELETE https://api.platform.io/v1/participants/ptcp_alex \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Typical flow
+
+<Steps>
+<Step title="Customer books an activity">
+  A parent books a junior racing session for 3 children.
+</Step>
+<Step title="Create participants">
+  Create a participant record for each child, linked to the parent's customer ID.
+</Step>
+<Step title="Sign waivers">
+  The parent signs the racing liability waiver on behalf of each minor participant.
+</Step>
+<Step title="Check in">
+  At arrival, staff verifies that all participants have signed waivers before the activity starts.
+</Step>
+</Steps>

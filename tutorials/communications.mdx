@@ -1,0 +1,180 @@
+---
+title: "Communications"
+description: "Send emails and SMS, build automations, and stream real-time notifications"
+---
+
+The communications system handles email, SMS, automated messaging, and in-app notifications. This guide covers templates, sending messages, building automations, and the real-time notification stream.
+
+## Email templates
+
+### Create a template
+
+```bash
+curl -X POST https://api.platform.io/v1/email-templates \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: email-tpl-001" \
+  -d '{
+    "name": "Booking Confirmation",
+    "subject": "Your booking at {{location_name}} is confirmed",
+    "body_html": "<h1>See you on {{booking_date}}!</h1><p>Hi {{customer_first_name}}, your {{product_name}} booking is confirmed for {{booking_time}}.</p>",
+    "body_text": "Hi {{customer_first_name}}, your {{product_name}} booking is confirmed for {{booking_date}} at {{booking_time}}."
+  }'
+```
+
+Templates support Mustache-style variables that are populated when the email is sent.
+
+### Send an email
+
+```bash
+curl -X POST https://api.platform.io/v1/email-templates/etpl_confirm/send \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: email-send-001" \
+  -d '{
+    "to": "jane@example.com",
+    "variables": {
+      "customer_first_name": "Jane",
+      "product_name": "Adult Race Session",
+      "location_name": "SpeedZone Austin",
+      "booking_date": "April 15, 2025",
+      "booking_time": "2:00 PM"
+    }
+  }'
+```
+
+### List templates
+
+```bash
+curl https://api.platform.io/v1/email-templates \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+---
+
+## SMS templates
+
+### Create a template
+
+```bash
+curl -X POST https://api.platform.io/v1/sms-templates \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: sms-tpl-001" \
+  -d '{
+    "name": "Booking Reminder",
+    "body": "Hi {{customer_first_name}}, reminder: your {{product_name}} session is tomorrow at {{booking_time}}. See you at {{location_name}}!"
+  }'
+```
+
+### Send an SMS
+
+```bash
+curl -X POST https://api.platform.io/v1/sms-templates/stpl_reminder/send \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: sms-send-001" \
+  -d '{
+    "to": "+15551234567",
+    "variables": {
+      "customer_first_name": "Jane",
+      "product_name": "Adult Race Session",
+      "location_name": "SpeedZone Austin",
+      "booking_time": "2:00 PM"
+    }
+  }'
+```
+
+---
+
+## Automations
+
+Automations trigger messages based on events — send a confirmation when a booking is created, a reminder 24 hours before, or a review request after completion.
+
+### Create an automation
+
+```bash
+curl -X POST https://api.platform.io/v1/automations \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: auto-create-001" \
+  -d '{
+    "name": "Post-visit review request",
+    "trigger": "booking.completed",
+    "delay_minutes": 120,
+    "action": {
+      "type": "send_email",
+      "template_id": "etpl_review_request"
+    }
+  }'
+```
+
+This automation sends a review request email 2 hours after a booking is completed.
+
+### Activate and deactivate
+
+Automations are inactive by default. Activate when ready:
+
+```bash
+curl -X POST https://api.platform.io/v1/automations/auto_review/activate \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+Pause an automation without deleting it:
+
+```bash
+curl -X POST https://api.platform.io/v1/automations/auto_review/deactivate \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Common automation patterns
+
+| Trigger | Delay | Action | Use case |
+|---------|-------|--------|----------|
+| `booking.confirmed` | 0 min | Send email | Booking confirmation |
+| `booking.confirmed` | 24h before start | Send SMS | Booking reminder |
+| `booking.completed` | 2 hours | Send email | Review request |
+| `customer.created` | 0 min | Send email | Welcome email |
+| `membership.renewed` | 0 min | Send email | Renewal confirmation |
+| `payment.failed` | 0 min | Send email | Failed payment alert |
+
+---
+
+## Notifications
+
+In-app notifications are delivered to staff users in real time.
+
+### List notifications
+
+```bash
+curl https://api.platform.io/v1/notifications \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Mark as read
+
+```bash
+curl -X PUT https://api.platform.io/v1/notifications/notif_abc123/read \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Real-time notification stream
+
+Subscribe to notifications via Server-Sent Events:
+
+```bash
+curl -N https://api.platform.io/v1/notifications/stream \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+```javascript
+const source = new EventSource(
+  "https://api.platform.io/v1/notifications/stream",
+  { headers: { "Authorization": "Bearer sk_test_your_key_here" } }
+);
+
+source.onmessage = (event) => {
+  const notification = JSON.parse(event.data);
+  console.log(`[${notification.type}] ${notification.message}`);
+};
+```

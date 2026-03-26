@@ -59,7 +59,12 @@
               "tutorials/memberships-loyalty",
               "tutorials/promotions-gift-cards",
               "tutorials/pos-integration",
-              "tutorials/walkins-waitlist"
+              "tutorials/walkins-waitlist",
+              "tutorials/venue-setup",
+              "tutorials/staff-management",
+              "tutorials/waivers-participants",
+              "tutorials/communications",
+              "tutorials/multi-venue-orgs"
             ]
           }
         ]
