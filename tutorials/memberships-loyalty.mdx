@@ -1,0 +1,183 @@
+---
+title: "Memberships and loyalty"
+description: "Enroll customers in memberships, manage subscriptions, and run loyalty programs"
+---
+
+Memberships handle recurring subscriptions with billing. Loyalty programs track points that customers earn and redeem. This guide covers both.
+
+## Memberships
+
+### Create a membership type
+
+Define the plan customers can enroll in:
+
+```bash
+curl -X POST https://api.platform.io/v1/membership-types \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: memtype-create-001" \
+  -d '{
+    "name": "Racing Club Monthly",
+    "interval": "month",
+    "price": "49.99",
+    "currency": "usd",
+    "benefits": ["2 free races per month", "10% off extras", "Priority booking"]
+  }'
+```
+
+### Enroll a customer
+
+```bash
+curl -X POST https://api.platform.io/v1/memberships \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: mem-enroll-001" \
+  -d '{
+    "customer_id": "cus_abc123",
+    "membership_type_id": "mtype_gold",
+    "payment_method_id": "pm_def456"
+  }'
+```
+
+```json
+{
+  "id": "mem_xyz789",
+  "object": "membership",
+  "customer_id": "cus_abc123",
+  "membership_type_id": "mtype_gold",
+  "status": "active",
+  "current_period_start": "2025-04-01T00:00:00Z",
+  "current_period_end": "2025-05-01T00:00:00Z"
+}
+```
+
+### Membership lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> active: Enroll
+    active --> frozen: Freeze
+    frozen --> active: Unfreeze
+    active --> cancelled: Cancel
+    active --> active: Renew
+```
+
+### Freeze a membership
+
+Pause billing while keeping the membership on record:
+
+```bash
+curl -X POST https://api.platform.io/v1/memberships/mem_xyz789/freeze \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "reason": "Customer traveling for 2 months"
+  }'
+```
+
+### Unfreeze
+
+```bash
+curl -X POST https://api.platform.io/v1/memberships/mem_xyz789/unfreeze \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Renew
+
+Manually trigger renewal (automatic renewals happen on the billing cycle):
+
+```bash
+curl -X POST https://api.platform.io/v1/memberships/mem_xyz789/renew \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Idempotency-Key: mem-renew-001"
+```
+
+### Cancel
+
+```bash
+curl -X POST https://api.platform.io/v1/memberships/mem_xyz789/cancel \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+---
+
+## Loyalty programs
+
+### Create a loyalty program
+
+```bash
+curl -X POST https://api.platform.io/v1/loyalty \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: loyalty-create-001" \
+  -d '{
+    "name": "Speed Points",
+    "points_per_dollar": 10,
+    "redemption_rate": 100,
+    "redemption_value": "1.00"
+  }'
+```
+
+In this example, customers earn 10 points per dollar spent, and 100 points can be redeemed for $1.00.
+
+### Award points
+
+```bash
+curl -X POST https://api.platform.io/v1/loyalty/loy_abc123/award \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: award-001" \
+  -d '{
+    "customer_id": "cus_abc123",
+    "points": 500,
+    "reason": "Completed 5 races in March"
+  }'
+```
+
+### Check balance
+
+```bash
+curl https://api.platform.io/v1/loyalty/loy_abc123/balance?customer_id=cus_abc123 \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+```json
+{
+  "customer_id": "cus_abc123",
+  "program_id": "loy_abc123",
+  "balance": 2350,
+  "lifetime_earned": 5000,
+  "lifetime_redeemed": 2650
+}
+```
+
+### Redeem points
+
+```bash
+curl -X POST https://api.platform.io/v1/loyalty/loy_abc123/redeem \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: redeem-001" \
+  -d '{
+    "customer_id": "cus_abc123",
+    "points": 1000,
+    "reason": "Applied to order ord_xyz"
+  }'
+```
+
+### View transaction history
+
+```bash
+curl "https://api.platform.io/v1/loyalty/loy_abc123/transactions?customer_id=cus_abc123&limit=20" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Webhooks
+
+Subscribe to membership and loyalty events:
+
+- `membership.activated` — new enrollment
+- `membership.cancelled` — membership ended
+- `membership.renewed` — billing cycle renewed
+
+See [Webhooks](/webhooks) for setup instructions.

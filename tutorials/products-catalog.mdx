@@ -1,0 +1,180 @@
+---
+title: "Products and catalog"
+description: "Manage products, categories, extras, and booking questions"
+---
+
+Products represent the bookable activities and services at your venue — karting sessions, party packages, trampoline time, and more. This guide covers managing your product catalog.
+
+## Create a product
+
+```bash
+curl -X POST https://api.platform.io/v1/products \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: prod-create-001" \
+  -d '{
+    "name": "Adult Race Session",
+    "description": "15-minute racing session on the Grand Prix circuit",
+    "category_id": "cat_racing",
+    "timing_model": "time_slotted",
+    "duration_minutes": 30,
+    "capacity": 8,
+    "base_price": "29.99",
+    "currency": "usd",
+    "status": "active"
+  }'
+```
+
+```json
+{
+  "id": "prod_adult_race",
+  "object": "product",
+  "name": "Adult Race Session",
+  "timing_model": "time_slotted",
+  "duration_minutes": 30,
+  "capacity": 8,
+  "base_price": "29.99",
+  "currency": "usd",
+  "status": "active",
+  "created_at": "2025-04-01T12:00:00Z"
+}
+```
+
+### Timing models
+
+Choose the model that matches how the activity operates:
+
+| Model | Use case |
+|-------|----------|
+| `time_slotted` | Fixed start times — races, escape rooms, classes |
+| `flow_based` | Open sessions — trampoline parks, open play areas |
+| `hybrid` | Mix of slots and flow — multi-activity venues |
+| `credit_token` | Prepaid credits — arcade tokens, ride tickets |
+| `open_session` | Walk-in with duration pricing — bowling, batting cages |
+| `queue_turnover` | Queue-based — walk-in attractions with wait times |
+
+### Product statuses
+
+| Status | Description |
+|--------|-------------|
+| `active` | Available for booking |
+| `draft` | Not yet published — hidden from customers |
+| `archived` | Removed from catalog, existing bookings unaffected |
+
+## Categories
+
+Organize products into categories for navigation and filtering.
+
+```bash
+curl -X POST https://api.platform.io/v1/categories \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: cat-create-001" \
+  -d '{
+    "name": "Racing",
+    "description": "Go-kart racing experiences"
+  }'
+```
+
+### List products by category
+
+```bash
+curl "https://api.platform.io/v1/products?category_id=cat_racing&status=active" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Extras and add-ons
+
+Extras are optional items customers can add to a booking — helmets, balaclavas, photo packages, food bundles.
+
+### Create an extra
+
+```bash
+curl -X POST https://api.platform.io/v1/extras \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: extra-create-001" \
+  -d '{
+    "name": "Photo Package",
+    "description": "Professional photos of your race session",
+    "price": "14.99",
+    "currency": "usd"
+  }'
+```
+
+### List extras
+
+```bash
+curl https://api.platform.io/v1/extras \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+Extras are attached to cart items or bookings using the `extras` array field:
+
+```json
+{
+  "product_id": "prod_adult_race",
+  "quantity": 2,
+  "extras": ["ext_photo", "ext_balaclava"]
+}
+```
+
+## Booking questions
+
+Collect information from customers at booking time — skill level, dietary restrictions, special requests.
+
+### Add a question to a product
+
+```bash
+curl -X POST https://api.platform.io/v1/products/prod_adult_race/questions \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: q-create-001" \
+  -d '{
+    "question": "What is your racing experience level?",
+    "type": "select",
+    "options": ["Beginner", "Intermediate", "Advanced"],
+    "required": true
+  }'
+```
+
+### List questions for a product
+
+```bash
+curl https://api.platform.io/v1/products/prod_adult_race/questions \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Update a question
+
+```bash
+curl -X PUT https://api.platform.io/v1/products/prod_adult_race/questions/pq_abc123 \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "required": false
+  }'
+```
+
+### Delete a question
+
+```bash
+curl -X DELETE https://api.platform.io/v1/products/prod_adult_race/questions/pq_abc123 \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Filter and search products
+
+```bash
+# By status
+curl "https://api.platform.io/v1/products?status=active" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+
+# By timing model
+curl "https://api.platform.io/v1/products?timing_model=time_slotted" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+
+# By category with expanded details
+curl "https://api.platform.io/v1/products?category_id=cat_racing&expand[]=category" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```

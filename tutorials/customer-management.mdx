@@ -1,0 +1,168 @@
+---
+title: "Manage customers"
+description: "Create, search, and manage customer profiles, payment methods, and credits"
+---
+
+Customers are the core identity in ClubSpeed. Every booking, order, and payment links back to a customer record. This guide covers the full customer lifecycle.
+
+## Create a customer
+
+```bash
+curl -X POST https://api.platform.io/v1/customers \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: cust-create-001" \
+  -d '{
+    "email": "jane.doe@example.com",
+    "first_name": "Jane",
+    "last_name": "Doe",
+    "phone": "+15551234567",
+    "date_of_birth": "1990-06-15",
+    "address": {
+      "line1": "123 Main St",
+      "city": "Austin",
+      "state": "TX",
+      "postal_code": "78701",
+      "country": "US"
+    },
+    "tags": ["walk-in", "karting"],
+    "metadata": {
+      "crm_id": "SF-10042",
+      "source": "website"
+    }
+  }'
+```
+
+```json
+{
+  "id": "cus_abc123",
+  "object": "customer",
+  "email": "jane.doe@example.com",
+  "first_name": "Jane",
+  "last_name": "Doe",
+  "total_visits": 0,
+  "total_spent": "0.00",
+  "created_at": "2025-03-25T14:30:00Z"
+}
+```
+
+## Search customers
+
+Find customers by email, phone, name, or any combination using full-text search:
+
+```bash
+curl "https://api.platform.io/v1/customers/search?q=jane+doe&limit=5" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+Filter by specific fields:
+
+```bash
+curl "https://api.platform.io/v1/customers/search?email=jane.doe@example.com" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+```bash
+curl "https://api.platform.io/v1/customers/search?segment=vip&limit=20" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Update a customer
+
+```bash
+curl -X PUT https://api.platform.io/v1/customers/cus_abc123 \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "segment": "vip",
+    "tags": ["walk-in", "karting", "league-member"],
+    "metadata": {
+      "crm_id": "SF-10042",
+      "loyalty_tier": "gold"
+    }
+  }'
+```
+
+## Payment methods
+
+Store payment methods on a customer for faster checkout.
+
+### Add a payment method
+
+```bash
+curl -X POST https://api.platform.io/v1/customers/cus_abc123/payment-methods \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: pm-add-001" \
+  -d '{
+    "type": "card",
+    "token": "tok_visa_4242"
+  }'
+```
+
+<Warning>Never send raw card numbers to the API. Use a tokenized payment method from your payment gateway's client-side SDK.</Warning>
+
+### List payment methods
+
+```bash
+curl https://api.platform.io/v1/customers/cus_abc123/payment-methods \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Remove a payment method
+
+```bash
+curl -X DELETE https://api.platform.io/v1/customers/cus_abc123/payment-methods/pm_def456 \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Customer credits
+
+Issue account credits for refund alternatives, promotions, or loyalty rewards.
+
+### Issue a credit
+
+```bash
+curl -X POST https://api.platform.io/v1/customers/cus_abc123/credits \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: credit-001" \
+  -d '{
+    "amount": "25.00",
+    "currency": "usd",
+    "reason": "Compensation for delayed heat start"
+  }'
+```
+
+### View credit history
+
+```bash
+curl "https://api.platform.io/v1/customers/cus_abc123/credits?limit=20" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Delete a customer
+
+Soft-deletes the customer. Their data is retained for records but the profile is deactivated:
+
+```bash
+curl -X DELETE https://api.platform.io/v1/customers/cus_abc123 \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Customer fields reference
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique identifier (`cus_` prefix) |
+| `email` | string | Email address (required) |
+| `first_name` | string | First name |
+| `last_name` | string | Last name |
+| `phone` | string | Phone number |
+| `date_of_birth` | date | Date of birth |
+| `address` | object | Mailing address |
+| `tags` | string[] | Custom tags for categorization |
+| `segment` | string | Customer segment |
+| `total_visits` | integer | Lifetime visit count (read-only) |
+| `total_spent` | string | Lifetime spend (read-only) |
+| `metadata` | object | Up to 50 custom key-value pairs |

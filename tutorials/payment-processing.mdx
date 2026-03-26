@@ -1,0 +1,168 @@
+---
+title: "Process payments"
+description: "Authorize, capture, refund, and manage payments through the API"
+---
+
+The API supports a two-step payment flow (authorize then capture) and direct capture. This guide covers the full payment lifecycle.
+
+## Payment lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> authorized: Create payment (authorize)
+    [*] --> captured: Create payment (direct capture)
+    authorized --> captured: Capture
+    authorized --> voided: Void
+    captured --> partially_refunded: Partial refund
+    captured --> refunded: Full refund
+```
+
+## Authorize a payment
+
+Authorization places a hold on the customer's payment method without charging it. This is useful when you need to confirm availability before collecting payment.
+
+```bash
+curl -X POST https://api.platform.io/v1/payments \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: pay-001-authorize" \
+  -d '{
+    "order_id": "ord_abc123",
+    "customer_id": "cus_def456",
+    "amount": "59.98",
+    "currency": "usd",
+    "capture": false
+  }'
+```
+
+```json
+{
+  "id": "pay_xyz789",
+  "object": "payment",
+  "status": "authorized",
+  "amount": "59.98",
+  "currency": "usd",
+  "method_type": "card",
+  "last_four": "4242"
+}
+```
+
+## Capture an authorized payment
+
+Once you're ready to charge the customer:
+
+```bash
+curl -X POST https://api.platform.io/v1/payments/pay_xyz789/capture \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Idempotency-Key: pay-001-capture"
+```
+
+The payment status changes from `authorized` to `captured`.
+
+## Direct capture
+
+Skip the authorization step and charge immediately by omitting `"capture": false` or setting it to `true`:
+
+```bash
+curl -X POST https://api.platform.io/v1/payments \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: pay-002-direct" \
+  -d '{
+    "order_id": "ord_abc123",
+    "customer_id": "cus_def456",
+    "amount": "59.98",
+    "currency": "usd"
+  }'
+```
+
+## Void an authorized payment
+
+Cancel a hold before capturing it:
+
+```bash
+curl -X POST https://api.platform.io/v1/payments/pay_xyz789/void \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Idempotency-Key: pay-001-void"
+```
+
+<Note>Voids only work on `authorized` payments. Once captured, use a refund instead.</Note>
+
+## Issue a refund
+
+Refund a captured payment in full or partially:
+
+```bash
+curl -X POST https://api.platform.io/v1/refunds \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: refund-001" \
+  -d '{
+    "payment_id": "pay_xyz789",
+    "amount": "29.99",
+    "reason": "Customer cancelled one of two bookings"
+  }'
+```
+
+```json
+{
+  "id": "rfnd_abc123",
+  "object": "refund",
+  "payment_id": "pay_xyz789",
+  "amount": "29.99",
+  "currency": "usd",
+  "status": "pending",
+  "reason": "Customer cancelled one of two bookings"
+}
+```
+
+Refund statuses: `pending` → `succeeded` or `failed`.
+
+## Payment statuses
+
+| Status | Description |
+|--------|-------------|
+| `pending` | Payment is being processed |
+| `authorized` | Hold placed, not yet charged |
+| `captured` | Payment collected |
+| `failed` | Payment was rejected |
+| `voided` | Authorization cancelled |
+
+## Tax rates and fees
+
+Configure tax rates and automatic fee rules that apply to orders:
+
+<Tabs>
+  <Tab title="Tax rates">
+  ```bash
+  curl -X POST https://api.platform.io/v1/tax-rates \
+    -H "Authorization: Bearer sk_test_your_key_here" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "name": "State sales tax",
+      "rate": "0.0825",
+      "active": true
+    }'
+  ```
+  </Tab>
+  <Tab title="Fee rules">
+  ```bash
+  curl -X POST https://api.platform.io/v1/fee-rules \
+    -H "Authorization: Bearer sk_test_your_key_here" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "name": "Online booking fee",
+      "type": "flat",
+      "amount": "2.50",
+      "active": true
+    }'
+  ```
+  </Tab>
+</Tabs>
+
+## Best practices
+
+- **Always use idempotency keys** on payment requests to prevent double charges.
+- **Authorize then capture** when there's a gap between booking and fulfillment.
+- **Store the payment ID** returned from creation — you'll need it for captures, voids, and refunds.
+- **Listen for webhooks** (`payment.captured`, `payment.failed`, `refund.succeeded`) instead of polling for status changes.

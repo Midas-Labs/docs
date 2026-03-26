@@ -28,7 +28,9 @@
             "pages": [
               "index",
               "quickstart",
-              "authentication"
+              "authentication",
+              "environments",
+              "sdks"
             ]
           },
           {
@@ -39,7 +41,25 @@
               "errors",
               "idempotency",
               "webhooks",
-              "metadata"
+              "metadata",
+              "rate-limits",
+              "versioning"
+            ]
+          },
+          {
+            "group": "Tutorials",
+            "pages": [
+              "tutorials/booking-integration",
+              "tutorials/payment-processing",
+              "tutorials/customer-management",
+              "tutorials/products-catalog",
+              "tutorials/scheduling-availability",
+              "tutorials/racing-leaderboards",
+              "tutorials/embed-booking-widget",
+              "tutorials/memberships-loyalty",
+              "tutorials/promotions-gift-cards",
+              "tutorials/pos-integration",
+              "tutorials/walkins-waitlist"
             ]
           }
         ]

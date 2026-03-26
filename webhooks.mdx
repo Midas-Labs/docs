@@ -74,8 +74,95 @@ curl -X POST https://api.platform.io/v1/webhooks/whk_abc123/test \
 
 <Tip>Use a tool like [ngrok](https://ngrok.com) to expose a local development server for testing webhook deliveries.</Tip>
 
+## Available event types
+
+### Bookings
+
+| Event | Trigger |
+|-------|---------|
+| `booking.confirmed` | Booking confirmed after checkout or operator approval |
+| `booking.cancelled` | Booking cancelled by guest, operator, or system |
+| `booking.checked_in` | Customer checked in for their booking |
+| `booking.completed` | Booking session finished |
+| `booking.no_show` | Customer did not arrive |
+| `booking.rescheduled` | Booking moved to a different time |
+| `booking.reserved` | Tentative reservation submitted (Reserve Confirm Later) |
+
+### Payments
+
+| Event | Trigger |
+|-------|---------|
+| `payment.authorized` | Payment hold placed |
+| `payment.captured` | Payment collected |
+| `payment.failed` | Payment attempt rejected |
+| `payment.voided` | Authorization cancelled |
+| `refund.succeeded` | Refund processed |
+| `refund.failed` | Refund attempt failed |
+
+### Customers
+
+| Event | Trigger |
+|-------|---------|
+| `customer.created` | New customer profile created |
+| `customer.updated` | Customer profile modified |
+| `customer.deleted` | Customer soft-deleted |
+
+### Orders
+
+| Event | Trigger |
+|-------|---------|
+| `order.created` | Order created from checkout |
+| `order.paid` | Order payment completed |
+| `order.cancelled` | Order cancelled |
+
+### Racing
+
+| Event | Trigger |
+|-------|---------|
+| `heat.started` | Race heat started |
+| `heat.finished` | Race heat completed |
+
+### Membership
+
+| Event | Trigger |
+|-------|---------|
+| `membership.activated` | Membership started |
+| `membership.cancelled` | Membership cancelled |
+| `membership.renewed` | Membership renewed for a new period |
+
+## Managing webhooks
+
+### Update a webhook
+
+```bash
+curl -X PUT https://api.platform.io/v1/webhooks/whk_abc123 \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "events": ["booking.confirmed", "booking.cancelled", "payment.captured"]
+  }'
+```
+
+### View delivery history
+
+```bash
+curl "https://api.platform.io/v1/webhooks/whk_abc123/deliveries?limit=20" \
+  -H "Authorization: Bearer sk_live_your_key_here"
+```
+
+Each delivery record includes the response status code, response time, and request/response bodies for debugging.
+
+### Delete a webhook
+
+```bash
+curl -X DELETE https://api.platform.io/v1/webhooks/whk_abc123 \
+  -H "Authorization: Bearer sk_live_your_key_here"
+```
+
 ## Best practices
 
 - **Respond quickly** — do heavy processing asynchronously after returning `200`.
 - **Handle duplicates** — the same event may be delivered more than once. Use the event `id` to deduplicate.
 - **Verify the source** — validate that incoming requests originate from ClubSpeed by checking the signature header.
+- **Use specific events** — subscribe only to the events you need rather than receiving all events.
+- **Monitor deliveries** — check delivery history periodically for persistent failures.

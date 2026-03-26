@@ -1,0 +1,176 @@
+---
+title: "POS integration"
+description: "Open tabs, add items, process payments, and manage devices with the point-of-sale API"
+---
+
+The POS system handles in-venue transactions — food and beverage, retail items, and service charges. Checks (tabs) track items and settle payments at the register.
+
+## Check lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> open: Create check
+    open --> open: Add/remove items
+    open --> closed: Pay
+    open --> voided: Void
+```
+
+## Open a check
+
+```bash
+curl -X POST https://api.platform.io/v1/pos/checks \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: check-create-001" \
+  -d '{
+    "customer_id": "cus_abc123",
+    "location_id": "loc_main",
+    "device_id": "dev_register1"
+  }'
+```
+
+```json
+{
+  "id": "chk_abc123",
+  "object": "pos_check",
+  "status": "open",
+  "items": [],
+  "subtotal": "0.00",
+  "tax": "0.00",
+  "total": "0.00"
+}
+```
+
+## Add items
+
+```bash
+curl -X POST https://api.platform.io/v1/pos/checks/chk_abc123/items \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: item-add-001" \
+  -d '{
+    "name": "Pepperoni Pizza",
+    "quantity": 1,
+    "unit_price": "12.99"
+  }'
+```
+
+### Update an item
+
+```bash
+curl -X PUT https://api.platform.io/v1/pos/checks/chk_abc123/items/chki_xyz \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "quantity": 2
+  }'
+```
+
+### Remove an item
+
+```bash
+curl -X DELETE https://api.platform.io/v1/pos/checks/chk_abc123/items/chki_xyz \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Pay and close a check
+
+```bash
+curl -X POST https://api.platform.io/v1/pos/checks/chk_abc123/pay \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: check-pay-001" \
+  -d '{
+    "payment_method_id": "pm_def456",
+    "tip_amount": 300
+  }'
+```
+
+<Note>The `tip_amount` is in cents. In this example, 300 = $3.00 tip.</Note>
+
+## Void a check
+
+Cancel an open check and reverse any holds:
+
+```bash
+curl -X POST https://api.platform.io/v1/pos/checks/chk_abc123/void \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: check-void-001" \
+  -d '{
+    "reason": "Customer changed their mind"
+  }'
+```
+
+## Menu layouts
+
+Configure the button layout for POS terminals:
+
+```bash
+curl -X POST https://api.platform.io/v1/pos/menu-layouts \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: menu-create-001" \
+  -d '{
+    "name": "Main Cafe Menu",
+    "location_id": "loc_main",
+    "categories": [
+      {
+        "name": "Pizza",
+        "items": [
+          {"name": "Pepperoni", "price": "12.99"},
+          {"name": "Margherita", "price": "11.99"}
+        ]
+      },
+      {
+        "name": "Drinks",
+        "items": [
+          {"name": "Soda", "price": "2.99"},
+          {"name": "Water", "price": "1.99"}
+        ]
+      }
+    ]
+  }'
+```
+
+### List menu layouts
+
+```bash
+curl https://api.platform.io/v1/pos/menu-layouts \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Device management
+
+### Register a POS device
+
+```bash
+curl -X POST https://api.platform.io/v1/pos/devices \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: dev-register-001" \
+  -d '{
+    "name": "Front Register",
+    "location_id": "loc_main",
+    "device_type": "terminal"
+  }'
+```
+
+### List devices
+
+```bash
+curl https://api.platform.io/v1/pos/devices \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Update a device
+
+```bash
+curl -X PUT https://api.platform.io/v1/pos/devices/dev_register1 \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Front Register - Updated",
+    "active": true
+  }'
+```

@@ -1,0 +1,76 @@
+---
+title: "SDKs and libraries"
+description: "Client libraries and tools for working with the ClubSpeed API"
+---
+
+The ClubSpeed API is a standard REST API that works with any HTTP client. We also provide official SDKs for common languages.
+
+## Official SDKs
+
+<Tabs>
+  <Tab title="Node.js">
+  ```bash
+  npm install @clubspeed/node
+  ```
+
+  ```javascript
+  import ClubSpeed from "@clubspeed/node";
+
+  const client = new ClubSpeed({ apiKey: "sk_test_your_key_here" });
+
+  const customers = await client.customers.list({ limit: 10 });
+  console.log(customers.data);
+  ```
+  </Tab>
+  <Tab title="Python">
+  ```bash
+  pip install clubspeed
+  ```
+
+  ```python
+  from clubspeed import ClubSpeed
+
+  client = ClubSpeed(api_key="sk_test_your_key_here")
+
+  customers = client.customers.list(limit=10)
+  print(customers.data)
+  ```
+  </Tab>
+  <Tab title="PHP">
+  ```bash
+  composer require clubspeed/clubspeed-php
+  ```
+
+  ```php
+  $client = new \ClubSpeed\Client('sk_test_your_key_here');
+
+  $customers = $client->customers->list(['limit' => 10]);
+  print_r($customers->data);
+  ```
+  </Tab>
+</Tabs>
+
+## SDK features
+
+All official SDKs provide:
+
+- **Automatic pagination** — iterate through all results without managing cursors.
+- **Typed responses** — full type definitions for every resource and endpoint.
+- **Retry with backoff** — automatic retries on network errors and `429`/`500` responses.
+- **Idempotency** — auto-generated idempotency keys on POST requests (configurable).
+
+## Using the API directly
+
+If an SDK isn't available for your language, use any HTTP client. The API accepts and returns JSON.
+
+```bash
+curl https://api.platform.io/v1/customers \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json"
+```
+
+All request and response schemas are documented in the [API reference](/api-reference/introduction).
+
+## OpenAPI spec
+
+Download the [OpenAPI 3.1 specification](/api-reference/openapi.yaml) to generate a client in any language using tools like [openapi-generator](https://openapi-generator.tech) or [Speakeasy](https://speakeasy.com).

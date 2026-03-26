@@ -1,0 +1,63 @@
+---
+title: "Versioning"
+description: "How the API handles versioning and breaking changes"
+---
+
+The API uses URL path versioning to ensure backward compatibility. All current endpoints are under `/v1/`.
+
+## URL versioning
+
+The version is part of the base URL:
+
+```
+https://api.platform.io/v1/customers
+```
+
+When a new major version is released, it will use a new path prefix (`/v2/`). Existing `/v1/` endpoints will continue to work during the deprecation period.
+
+## Per-request version override
+
+Override the API version for individual requests using the `X-API-Version` header:
+
+```bash
+curl https://api.platform.io/v1/customers \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "X-API-Version: 2026-04-01"
+```
+
+This is useful for testing new behavior before upgrading your integration.
+
+## What counts as a breaking change
+
+These changes will only happen in a new major version:
+
+- Removing an endpoint or field
+- Changing the type of an existing field
+- Renaming a field or endpoint
+- Changing required/optional status of a request parameter
+- Changing the meaning of an existing error code
+
+## Non-breaking changes
+
+These changes can happen at any time without a version bump:
+
+- Adding new endpoints
+- Adding new optional request parameters
+- Adding new fields to response objects
+- Adding new enum values
+- Adding new error codes
+- Changing error messages (the text, not the code)
+
+<Tip>Design your integration to ignore unknown fields in responses. This ensures you are forward-compatible with non-breaking additions.</Tip>
+
+## Current version
+
+The current API version is `2026-04-01`. This date corresponds to the API specification version, not a release calendar.
+
+## Deprecation policy
+
+When a new major version is released:
+
+1. The previous version enters a 12-month deprecation period.
+2. Deprecated endpoints return a `Sunset` header with the shutdown date.
+3. Email notifications are sent to account contacts at 90, 60, and 30 days before shutdown.

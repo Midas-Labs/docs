@@ -1,0 +1,76 @@
+---
+title: "Rate limits"
+description: "Understand API rate limits and how to handle them"
+---
+
+The API enforces rate limits to protect service stability. Limits vary by authentication method and plan.
+
+## Response headers
+
+Every response includes rate limit headers:
+
+| Header | Description |
+|--------|-------------|
+| `RateLimit-Limit` | Total requests allowed in the current window |
+| `RateLimit-Remaining` | Requests remaining in the current window |
+| `RateLimit-Reset` | Unix timestamp when the window resets |
+
+```bash
+HTTP/1.1 200 OK
+RateLimit-Limit: 1000
+RateLimit-Remaining: 998
+RateLimit-Reset: 1711324800
+```
+
+## When you hit the limit
+
+Exceeding the rate limit returns a `429 Too Many Requests` response:
+
+```json
+{
+  "error": {
+    "type": "api_error",
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Too many requests. Retry after 2025-03-25T00:00:00Z.",
+    "request_id": "req_abc123"
+  }
+}
+```
+
+## Handling rate limits
+
+<Steps>
+<Step title="Check the headers">
+  Monitor `RateLimit-Remaining` proactively. Slow down before hitting zero.
+</Step>
+<Step title="Respect Retry-After">
+  When you receive a `429`, wait until the `RateLimit-Reset` timestamp before retrying.
+</Step>
+<Step title="Use exponential backoff">
+  On retries, increase the delay between each attempt:
+
+  ```python
+  import time
+  import requests
+
+  def request_with_backoff(url, headers, max_retries=5):
+      for attempt in range(max_retries):
+          response = requests.get(url, headers=headers)
+          if response.status_code != 429:
+              return response
+
+          reset_at = int(response.headers.get("RateLimit-Reset", 0))
+          wait = max(reset_at - time.time(), 2 ** attempt)
+          time.sleep(wait)
+
+      return response
+  ```
+</Step>
+</Steps>
+
+## Best practices
+
+- **Batch reads** — use the maximum `limit` of 100 on list endpoints to reduce the number of requests.
+- **Cache responses** — store data locally when it doesn't change frequently (products, tax rates, locations).
+- **Use webhooks** — subscribe to [webhooks](/webhooks) instead of polling for changes.
+- **Spread traffic** — distribute requests evenly over time rather than sending bursts.

@@ -1,0 +1,292 @@
+---
+title: "Build a booking integration"
+description: "Create, manage, and complete bookings using the three booking flows"
+---
+
+The API supports three booking flows. Each matches a different business model. This guide walks through all three with working examples.
+
+## Booking flows overview
+
+| Flow | When to use | How it works |
+|------|-------------|--------------|
+| **Schedule First** | Standard online booking | Customer picks a time, adds to cart, checks out |
+| **Pay First** | Prepaid vouchers, gift experiences | Customer pays upfront, schedules later |
+| **Reserve Confirm Later** | Group events, party bookings | Customer requests a time, operator confirms |
+
+---
+
+## Schedule First
+
+The most common flow. Customers browse availability, add items to a cart, and checkout.
+
+<Steps>
+<Step title="Check availability">
+
+Query open time slots for a product on a given date:
+
+```bash
+curl "https://api.platform.io/v1/availability?product_id=prod_abc&date=2025-04-15" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+The response includes available slots with capacity:
+
+```json
+{
+  "data": [
+    {
+      "slot_starts_at": "2025-04-15T10:00:00Z",
+      "slot_ends_at": "2025-04-15T11:00:00Z",
+      "available_capacity": 12
+    },
+    {
+      "slot_starts_at": "2025-04-15T11:00:00Z",
+      "slot_ends_at": "2025-04-15T12:00:00Z",
+      "available_capacity": 8
+    }
+  ]
+}
+```
+</Step>
+
+<Step title="Create a cart">
+
+```bash
+curl -X POST https://api.platform.io/v1/carts \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "customer_id": "cus_abc123",
+    "location_id": "loc_xyz789"
+  }'
+```
+
+Carts expire after 30 minutes by default. Items placed in the cart create soft capacity holds on the selected time slots.
+</Step>
+
+<Step title="Add items to the cart">
+
+```bash
+curl -X POST https://api.platform.io/v1/carts/cart_abc/items \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 660e8400-e29b-41d4-a716-446655440001" \
+  -d '{
+    "product_id": "prod_abc",
+    "quantity": 2,
+    "slot_time": "2025-04-15T10:00:00Z",
+    "extras": ["ext_helmet", "ext_balaclava"]
+  }'
+```
+</Step>
+
+<Step title="Checkout">
+
+Checkout is asynchronous. The API returns `202 Accepted` with a `Location` header and workflow ID:
+
+```bash
+curl -X POST https://api.platform.io/v1/carts/cart_abc/checkout \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 770e8400-e29b-41d4-a716-446655440002" \
+  -d '{
+    "customer_id": "cus_abc123",
+    "payment_method_id": "pm_def456",
+    "channel": "web"
+  }'
+```
+
+```json
+{
+  "id": "ord_abc123",
+  "object": "order",
+  "status": "pending",
+  "flow_type": "schedule_first",
+  "total": "59.98",
+  "currency": "usd"
+}
+```
+</Step>
+
+<Step title="Verify the order">
+
+Poll the order or listen for a webhook to confirm it completed:
+
+```bash
+curl https://api.platform.io/v1/orders/ord_abc123?expand[]=bookings \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+</Step>
+</Steps>
+
+---
+
+## Pay First
+
+Customers pay upfront and schedule their visit later. Common for gift cards, vouchers, and prepaid experiences.
+
+<Steps>
+<Step title="Create a prepaid order">
+
+```bash
+curl -X POST https://api.platform.io/v1/orders/pay-first \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 880e8400-e29b-41d4-a716-446655440003" \
+  -d '{
+    "product_id": "prod_abc",
+    "quantity": 1,
+    "customer_id": "cus_abc123",
+    "payment_method_id": "pm_def456",
+    "channel": "web"
+  }'
+```
+
+The order is paid immediately. The booking is created with no scheduled time.
+</Step>
+
+<Step title="Schedule the booking later">
+
+When the customer is ready to visit, attach a time to the booking:
+
+```bash
+curl -X POST https://api.platform.io/v1/bookings/bkg_xyz/schedule \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 990e8400-e29b-41d4-a716-446655440004" \
+  -d '{
+    "booking_date": "2025-04-20",
+    "booking_time": "14:00",
+    "slot_instance_id": "slot_abc123"
+  }'
+```
+</Step>
+</Steps>
+
+---
+
+## Reserve Confirm Later
+
+For party bookings and group events where operator approval is needed before confirmation.
+
+<Steps>
+<Step title="Submit a reservation request">
+
+```bash
+curl -X POST https://api.platform.io/v1/bookings/reserve \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: aa0e8400-e29b-41d4-a716-446655440005" \
+  -d '{
+    "product_id": "prod_party",
+    "requested_date": "2025-05-01",
+    "requested_time": "15:00",
+    "party_size": 12,
+    "location_id": "loc_xyz789",
+    "customer_id": "cus_abc123",
+    "contact_name": "Jane Doe",
+    "contact_email": "jane@example.com",
+    "contact_phone": "+15551234567",
+    "notes": "Birthday party for 10-year-old. Need 2 race sessions."
+  }'
+```
+
+The booking is created with status `reserved`.
+</Step>
+
+<Step title="Operator confirms or declines">
+
+**Confirm** the reservation with specific details:
+
+```bash
+curl -X POST https://api.platform.io/v1/bookings/bkg_party/confirm \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "confirmed_date": "2025-05-01",
+    "confirmed_time": "15:00",
+    "resource_ids": ["res_room_a"],
+    "operator_notes": "Room A reserved, 2 heat sessions at 15:00 and 15:30",
+    "collect_deposit": true
+  }'
+```
+
+Or **decline** with a reason:
+
+```bash
+curl -X POST https://api.platform.io/v1/bookings/bkg_party/decline \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "reason": "Venue at full capacity for this date. Suggested alternative: May 3rd."
+  }'
+```
+</Step>
+</Steps>
+
+---
+
+## Managing bookings
+
+### Check in a customer
+
+```bash
+curl -X POST https://api.platform.io/v1/bookings/bkg_xyz/check-in \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "checked_in_at": "2025-04-15T09:55:00Z",
+    "staff_user_id": "usr_staff_001"
+  }'
+```
+
+### Cancel a booking
+
+```bash
+curl -X POST https://api.platform.io/v1/bookings/bkg_xyz/cancel \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "reason": "Customer requested cancellation",
+    "cancelled_by": "guest"
+  }'
+```
+
+### Reschedule a booking
+
+```bash
+curl -X POST https://api.platform.io/v1/bookings/bkg_xyz/reschedule \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "booking_date": "2025-04-22",
+    "booking_time": "11:00",
+    "reason": "Schedule conflict"
+  }'
+```
+
+## Booking statuses
+
+```mermaid
+stateDiagram-v2
+    [*] --> reserved: Reserve Confirm Later
+    [*] --> pending_confirmation: Schedule First / Pay First
+    reserved --> confirmed: Operator confirms
+    reserved --> cancelled: Operator declines
+    pending_confirmation --> confirmed: Payment succeeds
+    confirmed --> checked_in: Customer arrives
+    confirmed --> cancelled: Cancellation
+    confirmed --> no_show: No arrival
+    checked_in --> completed: Session ends
+```
+
+| Status | Description |
+|--------|-------------|
+| `reserved` | Awaiting operator confirmation |
+| `pending_confirmation` | Processing payment or checkout |
+| `confirmed` | Approved and scheduled |
+| `checked_in` | Customer has arrived |
+| `completed` | Session finished |
+| `cancelled` | Cancelled by guest, operator, or system |
+| `no_show` | Customer did not arrive |

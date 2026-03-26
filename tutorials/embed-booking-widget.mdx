@@ -1,0 +1,204 @@
+---
+title: "Embed the booking widget"
+description: "Add a booking widget to your website using the widget API"
+---
+
+The booking widget lets customers browse products, check availability, and book directly from your website. Widget endpoints use session-based authentication and expose a simplified API for public-facing use.
+
+## How it works
+
+1. Your server creates a widget session (`ws_` token) via the admin API.
+2. Your frontend uses the session token to call widget endpoints.
+3. The customer completes a booking without leaving your site.
+
+Widget sessions have a 30-minute TTL and are scoped to read-only product browsing and booking creation.
+
+## Get the widget configuration
+
+Retrieve branding and display settings for your widget:
+
+```bash
+curl https://api.platform.io/v1/widget/config \
+  -H "X-Widget-Session: ws_abc123"
+```
+
+## List bookable products
+
+```bash
+curl https://api.platform.io/v1/widget/products?limit=20 \
+  -H "X-Widget-Session: ws_abc123"
+```
+
+Returns products available for online booking, with pricing and descriptions.
+
+## Check availability
+
+Query time slots for a specific product and date:
+
+```bash
+curl "https://api.platform.io/v1/widget/availability?product_id=prod_abc&date=2025-04-15" \
+  -H "X-Widget-Session: ws_abc123"
+```
+
+```json
+{
+  "data": [
+    {
+      "slot_starts_at": "2025-04-15T10:00:00Z",
+      "slot_ends_at": "2025-04-15T11:00:00Z",
+      "available_capacity": 12,
+      "price": "29.99"
+    }
+  ]
+}
+```
+
+## Complete a booking
+
+The widget supports all four booking flows. Choose the endpoint that matches your use case.
+
+<Tabs>
+  <Tab title="Schedule First">
+  Customer picks a time and pays at checkout:
+
+  ```bash
+  curl -X POST https://api.platform.io/v1/widget/checkout \
+    -H "X-Widget-Session: ws_abc123" \
+    -H "Content-Type: application/json" \
+    -H "Idempotency-Key: widget-checkout-001" \
+    -d '{
+      "product_id": "prod_abc",
+      "slot_starts_at": "2025-04-15T10:00:00Z",
+      "party_size": 2,
+      "payment_method_token": "tok_visa_4242",
+      "customer": {
+        "email": "guest@example.com",
+        "first_name": "Jane",
+        "last_name": "Doe"
+      }
+    }'
+  ```
+  </Tab>
+  <Tab title="Pay First">
+  Customer pays upfront, schedules later:
+
+  ```bash
+  curl -X POST https://api.platform.io/v1/widget/pay-first \
+    -H "X-Widget-Session: ws_abc123" \
+    -H "Content-Type: application/json" \
+    -H "Idempotency-Key: widget-payfirst-001" \
+    -d '{
+      "product_id": "prod_abc",
+      "party_size": 2,
+      "payment_method_token": "tok_visa_4242",
+      "customer": {
+        "email": "guest@example.com",
+        "first_name": "Jane",
+        "last_name": "Doe"
+      }
+    }'
+  ```
+  </Tab>
+  <Tab title="Walk-in">
+  No time selection needed — customer checks in on arrival:
+
+  ```bash
+  curl -X POST https://api.platform.io/v1/widget/walk-in \
+    -H "X-Widget-Session: ws_abc123" \
+    -H "Content-Type: application/json" \
+    -H "Idempotency-Key: widget-walkin-001" \
+    -d '{
+      "product_id": "prod_abc",
+      "party_size": 2,
+      "customer": {
+        "email": "guest@example.com",
+        "first_name": "Jane",
+        "last_name": "Doe"
+      }
+    }'
+  ```
+  </Tab>
+  <Tab title="Reserve">
+  Customer requests a time, operator confirms later:
+
+  ```bash
+  curl -X POST https://api.platform.io/v1/widget/reserve \
+    -H "X-Widget-Session: ws_abc123" \
+    -H "Content-Type: application/json" \
+    -H "Idempotency-Key: widget-reserve-001" \
+    -d '{
+      "product_id": "prod_party",
+      "slot_starts_at": "2025-05-01T15:00:00Z",
+      "party_size": 12,
+      "customer": {
+        "email": "jane@example.com",
+        "first_name": "Jane",
+        "last_name": "Doe",
+        "phone": "+15551234567"
+      }
+    }'
+  ```
+  </Tab>
+</Tabs>
+
+## Lobby display
+
+Retrieve real-time queue and status data for in-venue display screens:
+
+```bash
+curl https://api.platform.io/v1/widget/lobby-display \
+  -H "X-Widget-Session: ws_abc123"
+```
+
+## Frontend integration example
+
+A minimal JavaScript integration using safe DOM methods:
+
+```javascript
+const SESSION_TOKEN = "ws_abc123"; // obtained from your server
+
+async function loadProducts() {
+  const response = await fetch("https://api.platform.io/v1/widget/products", {
+    headers: { "X-Widget-Session": SESSION_TOKEN }
+  });
+  const { data } = await response.json();
+
+  const container = document.getElementById("clubspeed-widget");
+
+  data.forEach(product => {
+    const card = document.createElement("div");
+
+    const title = document.createElement("h3");
+    title.textContent = product.name;
+    card.appendChild(title);
+
+    const desc = document.createElement("p");
+    desc.textContent = product.description;
+    card.appendChild(desc);
+
+    const price = document.createElement("p");
+    price.textContent = `From ${product.base_price} ${product.currency}`;
+    card.appendChild(price);
+
+    const button = document.createElement("button");
+    button.textContent = "Book now";
+    button.addEventListener("click", () => selectProduct(product.id));
+    card.appendChild(button);
+
+    container.appendChild(card);
+  });
+}
+
+loadProducts();
+```
+
+```html
+<div id="clubspeed-widget"></div>
+<script src="widget.js"></script>
+```
+
+## Security considerations
+
+- **Never expose admin API keys** in client-side code. Widget sessions are designed for public use.
+- **Validate on the server** — your backend should create widget sessions and pass tokens to the frontend.
+- **Sessions expire** after 30 minutes. Handle token refresh gracefully in your UI.

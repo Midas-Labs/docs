@@ -1,0 +1,189 @@
+---
+title: "Promotions and gift cards"
+description: "Create discount campaigns, generate codes, and manage gift card balances"
+---
+
+Drive revenue with promotional campaigns and gift cards. This guide covers creating campaigns, generating and validating discount codes, and managing gift card lifecycle.
+
+## Promotional campaigns
+
+### Create a campaign
+
+```bash
+curl -X POST https://api.platform.io/v1/promotions \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: promo-create-001" \
+  -d '{
+    "name": "Summer Racing Special",
+    "discount_type": "percentage",
+    "discount_value": "20",
+    "starts_at": "2025-06-01T00:00:00Z",
+    "ends_at": "2025-08-31T23:59:59Z",
+    "max_redemptions": 500
+  }'
+```
+
+```json
+{
+  "id": "promo_summer20",
+  "object": "campaign",
+  "name": "Summer Racing Special",
+  "discount_type": "percentage",
+  "discount_value": "20",
+  "total_redemptions": 0,
+  "max_redemptions": 500,
+  "status": "active"
+}
+```
+
+### Generate discount codes
+
+Create individual codes tied to a campaign:
+
+```bash
+curl -X POST https://api.platform.io/v1/promotions/promo_summer20/codes \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: codes-gen-001" \
+  -d '{
+    "quantity": 100,
+    "prefix": "SUMMER",
+    "max_uses_per_code": 1
+  }'
+```
+
+### List codes for a campaign
+
+```bash
+curl "https://api.platform.io/v1/promotions/promo_summer20/codes?limit=20" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Validate a discount code
+
+Check if a code is valid before applying it at checkout:
+
+```bash
+curl -X POST https://api.platform.io/v1/promotions/validate \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "code": "SUMMER-A1B2C3",
+    "order_total": "59.98"
+  }'
+```
+
+A valid response includes the discount amount:
+
+```json
+{
+  "code": "SUMMER-A1B2C3",
+  "valid": true,
+  "discount_type": "percentage",
+  "discount_value": "20",
+  "discount_amount": "11.99",
+  "campaign_id": "promo_summer20"
+}
+```
+
+An invalid code returns details about why:
+
+```json
+{
+  "code": "EXPIRED-CODE",
+  "valid": false,
+  "reason": "Campaign has ended"
+}
+```
+
+### Update a campaign
+
+```bash
+curl -X PUT https://api.platform.io/v1/promotions/promo_summer20 \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "max_redemptions": 1000
+  }'
+```
+
+### Delete a campaign
+
+```bash
+curl -X DELETE https://api.platform.io/v1/promotions/promo_summer20 \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+---
+
+## Gift cards
+
+### Create a gift card
+
+```bash
+curl -X POST https://api.platform.io/v1/gift-cards \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: gc-create-001" \
+  -d '{
+    "initial_balance": "50.00",
+    "currency": "usd",
+    "recipient_email": "friend@example.com",
+    "message": "Happy birthday! Enjoy some racing."
+  }'
+```
+
+```json
+{
+  "id": "gc_abc123",
+  "object": "gift_card",
+  "code": "GIFT-XXXX-YYYY",
+  "initial_balance": "50.00",
+  "current_balance": "50.00",
+  "currency": "usd",
+  "status": "active"
+}
+```
+
+### Top up a gift card
+
+Add more balance to an existing card:
+
+```bash
+curl -X POST https://api.platform.io/v1/gift-cards/gc_abc123/topup \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: gc-topup-001" \
+  -d '{
+    "amount": "25.00"
+  }'
+```
+
+### Redeem a gift card
+
+Deduct balance when applied to an order:
+
+```bash
+curl -X POST https://api.platform.io/v1/gift-cards/gc_abc123/redeem \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: gc-redeem-001" \
+  -d '{
+    "amount": "29.99",
+    "order_id": "ord_xyz789"
+  }'
+```
+
+### Check gift card balance
+
+```bash
+curl https://api.platform.io/v1/gift-cards/gc_abc123 \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Combining promotions with gift cards
+
+Discount codes and gift cards can be used together at checkout. Apply the discount code first (reduces the order total), then redeem the gift card for the remaining balance.
+
+<Note>Gift card redemptions are processed as payment methods, not discounts. The order total reflects the full pre-discount price minus the promotion discount, and the gift card covers part or all of the resulting amount.</Note>

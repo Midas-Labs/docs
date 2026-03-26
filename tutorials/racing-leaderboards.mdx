@@ -1,0 +1,164 @@
+---
+title: "Racing and leaderboards"
+description: "Manage heats, ingest lap data, and display leaderboards and live timing"
+---
+
+ClubSpeed's racing system tracks heats, lap times, and leaderboards for karting and other timed activities. This guide covers heat management, lap data ingestion, leaderboards, and the live timing feed.
+
+## Heat lifecycle
+
+Heats progress through a simple state machine: **create → start → finish**.
+
+### Create a heat
+
+```bash
+curl -X POST https://api.platform.io/v1/racing/heats \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: heat-create-001" \
+  -d '{
+    "track_id": "trk_main",
+    "scheduled_at": "2025-04-15T14:00:00Z"
+  }'
+```
+
+### Add racers
+
+```bash
+curl -X POST https://api.platform.io/v1/racing/heats/heat_abc/racers \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: racer-add-001" \
+  -d '{
+    "customer_id": "cus_abc123",
+    "kart_number": 7
+  }'
+```
+
+### Start the heat
+
+```bash
+curl -X POST https://api.platform.io/v1/racing/heats/heat_abc/start \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Finish the heat
+
+```bash
+curl -X POST https://api.platform.io/v1/racing/heats/heat_abc/finish \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Ingest lap data
+
+Push lap times from your timing system as they happen. Each lap is recorded individually:
+
+```bash
+curl -X POST https://api.platform.io/v1/racing/laps \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: lap-001-racer7-lap3" \
+  -d '{
+    "heat_id": "heat_abc",
+    "racer_id": "hracer_xyz",
+    "lap_number": 3,
+    "lap_time_ms": 42150,
+    "timestamp": "2025-04-15T14:03:22Z"
+  }'
+```
+
+<Tip>Use meaningful idempotency keys (e.g., heat + racer + lap number) so that retries from your timing bridge never create duplicate laps.</Tip>
+
+### Query laps
+
+Filter by heat or racer:
+
+```bash
+curl "https://api.platform.io/v1/racing/laps?heat_id=heat_abc&limit=100" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+```bash
+curl "https://api.platform.io/v1/racing/laps?racer_id=hracer_xyz&limit=50" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Leaderboards
+
+Leaderboards are computed automatically from lap data. They are read-only — you query them, not create them.
+
+### List leaderboards
+
+```bash
+curl https://api.platform.io/v1/racing/leaderboards \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Get a leaderboard
+
+```bash
+curl https://api.platform.io/v1/racing/leaderboards/lb_weekly?expand[]=entries \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Tracks
+
+Manage your physical tracks:
+
+```bash
+curl -X POST https://api.platform.io/v1/racing/tracks \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: track-create-001" \
+  -d '{
+    "name": "Grand Prix Circuit",
+    "length_meters": 450,
+    "configuration": "indoor"
+  }'
+```
+
+## Live timing feed
+
+Subscribe to real-time race events via Server-Sent Events (SSE):
+
+```bash
+curl -N https://api.platform.io/v1/racing/live \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+The stream emits three event types:
+
+```
+event: heat_started
+data: {"heat_id": "heat_abc", "track_id": "trk_main", "started_at": "2025-04-15T14:00:00Z"}
+
+event: lap_completed
+data: {"heat_id": "heat_abc", "racer_id": "hracer_xyz", "lap_number": 3, "lap_time_ms": 42150}
+
+event: heat_finished
+data: {"heat_id": "heat_abc", "finished_at": "2025-04-15T14:12:30Z"}
+```
+
+### Consuming in JavaScript
+
+```javascript
+const source = new EventSource(
+  "https://api.platform.io/v1/racing/live",
+  { headers: { "Authorization": "Bearer sk_test_your_key_here" } }
+);
+
+source.addEventListener("lap_completed", (event) => {
+  const lap = JSON.parse(event.data);
+  console.log(`Racer ${lap.racer_id} — Lap ${lap.lap_number}: ${lap.lap_time_ms}ms`);
+});
+
+source.addEventListener("heat_started", (event) => {
+  console.log("Heat started:", JSON.parse(event.data));
+});
+
+source.addEventListener("heat_finished", (event) => {
+  console.log("Heat finished:", JSON.parse(event.data));
+});
+```
+
+<Note>The live feed requires an active connection. If the connection drops, reconnect and use the `Last-Event-ID` header to resume from where you left off.</Note>

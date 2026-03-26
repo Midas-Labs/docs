@@ -1,0 +1,83 @@
+---
+title: "Environments"
+description: "Sandbox and production environments for development and testing"
+---
+
+The API provides two environments. Use sandbox for development and testing, and production for live operations.
+
+## Sandbox
+
+| | |
+|---|---|
+| **Base URL** | `https://api.platform.io/v1/` |
+| **API key prefix** | `sk_test_` |
+| **Data** | Isolated test data, reset on demand |
+| **Payments** | Simulated — no real charges |
+
+```bash
+curl https://api.platform.io/v1/customers \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+Sandbox data is completely isolated from production. Create, modify, and delete resources freely without affecting live operations.
+
+## Production
+
+| | |
+|---|---|
+| **Base URL** | `https://api.platform.io/v1/` |
+| **API key prefix** | `sk_live_` |
+| **Data** | Live customer and booking data |
+| **Payments** | Real transactions processed |
+
+```bash
+curl https://api.platform.io/v1/customers \
+  -H "Authorization: Bearer sk_live_your_key_here"
+```
+
+<Warning>Production API keys access real data and process real payments. Handle them with the same care as passwords.</Warning>
+
+## Test cards
+
+Use these card numbers in sandbox to simulate payment outcomes:
+
+| Card number | Outcome |
+|-------------|---------|
+| `4242 4242 4242 4242` | Successful payment |
+| `4000 0000 0000 0002` | Card declined |
+| `4000 0000 0000 9995` | Insufficient funds |
+| `4000 0000 0000 3220` | Requires 3D Secure |
+
+Use any future expiration date, any 3-digit CVC, and any postal code.
+
+## Switching environments
+
+Your API key determines which environment handles the request. No URL changes are needed — the same base URL routes to sandbox or production based on the key prefix.
+
+<Tabs>
+  <Tab title="Node.js">
+  ```javascript
+  // Development
+  const client = new ClubSpeed({ apiKey: process.env.CLUBSPEED_TEST_KEY });
+
+  // Production
+  const client = new ClubSpeed({ apiKey: process.env.CLUBSPEED_LIVE_KEY });
+  ```
+  </Tab>
+  <Tab title="Python">
+  ```python
+  import os
+  from clubspeed import ClubSpeed
+
+  # Development
+  client = ClubSpeed(api_key=os.environ["CLUBSPEED_TEST_KEY"])
+
+  # Production
+  client = ClubSpeed(api_key=os.environ["CLUBSPEED_LIVE_KEY"])
+  ```
+  </Tab>
+</Tabs>
+
+## Webhooks in sandbox
+
+Sandbox triggers webhook events the same way production does. Register a separate webhook endpoint for your test environment to avoid mixing test and live event processing.

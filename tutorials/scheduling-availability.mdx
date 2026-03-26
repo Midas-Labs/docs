@@ -1,0 +1,217 @@
+---
+title: "Scheduling and availability"
+description: "Configure schedules, resources, and availability for bookable products"
+---
+
+The scheduling system controls when and where customers can book. This guide covers setting up schedules, managing resources, blocking time off, and querying availability.
+
+## Concepts
+
+| Concept | Description |
+|---------|-------------|
+| **Schedule** | Operating hours and slot templates for a product at a location |
+| **Resource** | A bookable asset — room, lane, kart, court, etc. |
+| **Resource type** | Classification for resources (e.g., "Lane", "Party Room") |
+| **Availability block** | A closure or override that prevents booking for a date range |
+| **Capacity window** | Time range with a maximum concurrent occupancy limit |
+
+## Set up a schedule
+
+Define when a product is available for booking:
+
+```bash
+curl -X POST https://api.platform.io/v1/schedules \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: sched-create-001" \
+  -d '{
+    "product_id": "prod_karting",
+    "location_id": "loc_main",
+    "days": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+    "start_time": "10:00",
+    "end_time": "22:00",
+    "slot_duration_minutes": 30,
+    "slot_capacity": 8
+  }'
+```
+
+Create a separate schedule for weekends with different hours:
+
+```bash
+curl -X POST https://api.platform.io/v1/schedules \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: sched-create-002" \
+  -d '{
+    "product_id": "prod_karting",
+    "location_id": "loc_main",
+    "days": ["saturday", "sunday"],
+    "start_time": "09:00",
+    "end_time": "23:00",
+    "slot_duration_minutes": 30,
+    "slot_capacity": 12
+  }'
+```
+
+## Manage resources
+
+### Create resource types
+
+```bash
+curl -X POST https://api.platform.io/v1/resource-types \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: restype-001" \
+  -d '{
+    "name": "Indoor Track Lane"
+  }'
+```
+
+### Create resources
+
+```bash
+curl -X POST https://api.platform.io/v1/resources \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: res-create-001" \
+  -d '{
+    "name": "Lane 1",
+    "resource_type_id": "rtype_lane",
+    "location_id": "loc_main",
+    "capacity": 8
+  }'
+```
+
+### List resources by type
+
+```bash
+curl "https://api.platform.io/v1/resources?resource_type_id=rtype_lane&location_id=loc_main" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Block time off
+
+Create availability blocks for closures, maintenance, or holiday overrides:
+
+```bash
+curl -X POST https://api.platform.io/v1/availability-blocks \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: block-create-001" \
+  -d '{
+    "location_id": "loc_main",
+    "start_date": "2025-12-25",
+    "end_date": "2025-12-25",
+    "reason": "Christmas Day closure"
+  }'
+```
+
+Block a specific resource for maintenance:
+
+```bash
+curl -X POST https://api.platform.io/v1/availability-blocks \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: block-create-002" \
+  -d '{
+    "resource_id": "res_lane1",
+    "start_date": "2025-04-20",
+    "end_date": "2025-04-21",
+    "reason": "Track resurfacing"
+  }'
+```
+
+<Note>Existing confirmed bookings within a blocked range are not automatically cancelled. Handle those separately if needed.</Note>
+
+### Remove a block
+
+Restore availability by deleting the block:
+
+```bash
+curl -X DELETE https://api.platform.io/v1/availability-blocks/avblk_abc123 \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Query availability
+
+The unified availability endpoint resolves the product's timing model and returns the appropriate format:
+
+```bash
+curl "https://api.platform.io/v1/availability?product_id=prod_karting&date=2025-04-15&location_id=loc_main" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Time-slotted products
+
+Returns discrete slots with remaining capacity:
+
+```json
+{
+  "product_id": "prod_karting",
+  "timing_model": "time_slotted",
+  "date": "2025-04-15",
+  "slots": [
+    {
+      "slot_starts_at": "2025-04-15T10:00:00Z",
+      "slot_ends_at": "2025-04-15T10:30:00Z",
+      "available_capacity": 6
+    },
+    {
+      "slot_starts_at": "2025-04-15T10:30:00Z",
+      "slot_ends_at": "2025-04-15T11:00:00Z",
+      "available_capacity": 8
+    }
+  ]
+}
+```
+
+### Flow-based products
+
+Returns capacity windows with current occupancy:
+
+```json
+{
+  "product_id": "prod_openplay",
+  "timing_model": "flow_based",
+  "date": "2025-04-15",
+  "windows": [
+    {
+      "starts_at": "2025-04-15T10:00:00Z",
+      "ends_at": "2025-04-15T14:00:00Z",
+      "max_concurrent": 40,
+      "current_occupancy": 12
+    }
+  ]
+}
+```
+
+### Multi-day availability
+
+Check multiple days in a single request:
+
+```bash
+curl "https://api.platform.io/v1/availability?product_id=prod_karting&date=2025-04-15&location_id=loc_main&days=7" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Filter by party size
+
+Only return slots with enough capacity:
+
+```bash
+curl "https://api.platform.io/v1/availability?product_id=prod_karting&date=2025-04-15&location_id=loc_main&party_size=4" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Timing models
+
+Products use different scheduling strategies based on their `timing_model`:
+
+| Model | Description | Example |
+|-------|-------------|---------|
+| `time_slotted` | Fixed start/end times with capacity per slot | Go-kart races, escape rooms |
+| `flow_based` | Open sessions with max concurrent occupancy | Trampoline parks, open play |
+| `hybrid` | Mixed segments combining slots and flow | Multi-activity venues |
+| `credit_token` | Prepaid credits redeemed at any time | Arcade tokens, race credits |
+| `open_session` | Walk-in with duration-based pricing | Bowling, batting cages |
+| `queue_turnover` | Queue-based with estimated wait times | Walk-in attractions |

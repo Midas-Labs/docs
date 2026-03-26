@@ -1,0 +1,201 @@
+---
+title: "Walk-ins and waitlist"
+description: "Handle walk-in customers and manage waitlist queues"
+---
+
+Not every customer books ahead. The walk-in and waitlist systems handle guests who arrive without a reservation.
+
+## Walk-in flow
+
+Walk-ins follow a Check-In First model: the customer arrives, gets checked in, participates in activities, and pays at the end.
+
+### Check in a walk-in
+
+```bash
+curl -X POST https://api.platform.io/v1/walk-in/check-in \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: walkin-001" \
+  -d '{
+    "product_id": "prod_openplay",
+    "location_id": "loc_main",
+    "party_size": 3,
+    "customer_id": "cus_abc123"
+  }'
+```
+
+```json
+{
+  "booking_id": "bkg_walkin_001",
+  "order_id": "ord_walkin_001",
+  "status": "checked_in",
+  "checked_in_at": "2025-04-15T14:30:00Z",
+  "auto_close_at": "2025-04-15T16:30:00Z",
+  "wristband_code": "WB-7X4K",
+  "order": {
+    "id": "ord_walkin_001",
+    "status": "pending",
+    "total": "0.00"
+  }
+}
+```
+
+The system creates a booking in `checked_in` status and an open order with zero balance. A timer auto-closes the session based on the product's configured duration.
+
+### Assign to an activity
+
+During the visit, assign the guest to specific resources or add extras:
+
+```bash
+curl -X POST https://api.platform.io/v1/walk-in/assign \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: walkin-assign-001" \
+  -d '{
+    "booking_id": "bkg_walkin_001",
+    "resource_id": "res_lane3",
+    "extras": ["ext_helmet"]
+  }'
+```
+
+Each assignment adds line items to the open order, updating the running total.
+
+### Close and pay
+
+When the guest is done, convert the walk-in to a finalized booking and process payment:
+
+```bash
+curl -X POST https://api.platform.io/v1/walk-in/attach-booking \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: walkin-close-001" \
+  -d '{
+    "booking_id": "bkg_walkin_001",
+    "payment_method_id": "pm_def456"
+  }'
+```
+
+```json
+{
+  "booking_id": "bkg_walkin_001",
+  "status": "checked_out",
+  "checked_out_at": "2025-04-15T16:15:00Z",
+  "session_duration_minutes": 105,
+  "order": {
+    "id": "ord_walkin_001",
+    "status": "paid",
+    "total": "44.97"
+  },
+  "payment": {
+    "id": "pay_xyz789",
+    "status": "captured",
+    "amount": "44.97",
+    "method": "card",
+    "card_last_four": "4242"
+  },
+  "receipt_url": "https://receipts.platform.io/ord_walkin_001"
+}
+```
+
+---
+
+## Waitlist
+
+When the venue is at capacity, customers can join a waitlist and get notified when a spot opens.
+
+### Join the waitlist
+
+```bash
+curl -X POST https://api.platform.io/v1/waitlist \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: wait-join-001" \
+  -d '{
+    "customer_id": "cus_abc123",
+    "product_id": "prod_openplay",
+    "party_size": 2,
+    "location_id": "loc_main"
+  }'
+```
+
+```json
+{
+  "id": "wl_abc123",
+  "object": "waitlist_entry",
+  "position": 3,
+  "estimated_wait_minutes": 25,
+  "status": "waiting"
+}
+```
+
+### Check position
+
+Customers can check their current position and estimated wait:
+
+```bash
+curl https://api.platform.io/v1/waitlist/position/wl_abc123 \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+```json
+{
+  "id": "wl_abc123",
+  "position": 1,
+  "estimated_wait_minutes": 8
+}
+```
+
+### Confirm when called
+
+When a spot opens, the customer is notified. They confirm to proceed:
+
+```bash
+curl -X POST https://api.platform.io/v1/waitlist/wl_abc123/confirm \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: wait-confirm-001" \
+  -d '{
+    "payment_method_token": "tok_visa_4242"
+  }'
+```
+
+After confirmation, the system creates a booking and the customer proceeds to check-in.
+
+### Leave the waitlist
+
+```bash
+curl -X DELETE https://api.platform.io/v1/waitlist/wl_abc123 \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### View the full waitlist
+
+```bash
+curl "https://api.platform.io/v1/waitlist?location_id=loc_main&limit=50" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Walk-in + waitlist together
+
+A typical busy-venue flow:
+
+<Steps>
+<Step title="Guest arrives">
+  Staff checks current capacity. If full, add the guest to the waitlist.
+</Step>
+<Step title="Spot opens">
+  The system advances the queue and notifies the next guest.
+</Step>
+<Step title="Guest confirms">
+  The guest confirms via the widget or staff confirms at the register.
+</Step>
+<Step title="Walk-in check-in">
+  Staff checks the guest in using the walk-in endpoint. A wristband is issued.
+</Step>
+<Step title="Session activities">
+  Assign the guest to resources and add extras as they participate.
+</Step>
+<Step title="Checkout">
+  Close the session, process payment, and send a receipt.
+</Step>
+</Steps>
