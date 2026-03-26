@@ -3,57 +3,11 @@ title: "Introduction"
 description: "ClubSpeed Unified Platform API documentation"
 ---
 
-The ClubSpeed Unified Platform API gives you programmatic access to manage venues, bookings, customers, payments, racing, and more. Build integrations, automate workflows, and extend your venue management system.
+The ClubSpeed Unified Platform API gives you programmatic access to manage venues, bookings, customers, payments, racing, and more. The API is split into two sections based on audience.
 
-## Get started
+## External API
 
-<Columns cols={2}>
-  <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Get your API key and make your first request in minutes.
-  </Card>
-  <Card title="Authentication" icon="lock" href="/authentication">
-    JWT tokens, API keys, and widget sessions.
-  </Card>
-  <Card title="Environments" icon="server" href="/environments">
-    Sandbox and production environments for dev and testing.
-  </Card>
-  <Card title="SDKs" icon="cube" href="/sdks">
-    Client libraries for Node.js, Python, and PHP.
-  </Card>
-</Columns>
-
-## Core concepts
-
-<Columns cols={2}>
-  <Card title="Pagination" icon="arrow-right" href="/pagination">
-    Navigate large result sets with cursor-based pagination.
-  </Card>
-  <Card title="Expanding objects" icon="arrows-from-line" href="/expanding-objects">
-    Inline related objects in a single request.
-  </Card>
-  <Card title="Error handling" icon="triangle-exclamation" href="/errors">
-    Error types, codes, and how to handle them.
-  </Card>
-  <Card title="Idempotency" icon="shield-check" href="/idempotency">
-    Safely retry requests without duplicate side effects.
-  </Card>
-  <Card title="Webhooks" icon="webhook" href="/webhooks">
-    Real-time event notifications for bookings, payments, and more.
-  </Card>
-  <Card title="Metadata" icon="tags" href="/metadata">
-    Attach custom key-value data to resources.
-  </Card>
-  <Card title="Rate limits" icon="gauge" href="/rate-limits">
-    Understand limits and handle throttling.
-  </Card>
-  <Card title="Versioning" icon="code-branch" href="/versioning">
-    API version strategy and breaking change policy.
-  </Card>
-</Columns>
-
-## Tutorials
-
-Step-by-step guides for common integration scenarios.
+For integrators, partners, and customer-facing applications — bookings, payments, customers, widgets, and public racing data.
 
 <Columns cols={2}>
   <Card title="Build a booking integration" icon="calendar-check" href="/tutorials/booking-integration">
@@ -65,17 +19,39 @@ Step-by-step guides for common integration scenarios.
   <Card title="Manage customers" icon="users" href="/tutorials/customer-management">
     Create profiles, store payment methods, and issue credits.
   </Card>
+  <Card title="Embed the booking widget" icon="window-maximize" href="/tutorials/embed-booking-widget">
+    Add a customer-facing booking flow to your website.
+  </Card>
+  <Card title="Walk-ins and waitlist" icon="person-walking" href="/tutorials/walkins-waitlist">
+    Handle walk-in guests and manage waitlist queues.
+  </Card>
+  <Card title="Waivers and participants" icon="file-signature" href="/tutorials/waivers-participants">
+    Digital waivers, signatures, and participant profiles.
+  </Card>
+  <Card title="Racing displays" icon="flag-checkered" href="/tutorials/racing-displays">
+    Leaderboards, race results, and live timing feeds.
+  </Card>
+</Columns>
+
+## Internal API
+
+For ClubSpeed administrators and operators — venue setup, staff, products, scheduling, POS, and more.
+
+<Columns cols={2}>
+  <Card title="Venue setup" icon="building" href="/tutorials/venue-setup">
+    Configure tenants, locations, and venue settings.
+  </Card>
+  <Card title="Staff management" icon="user-gear" href="/tutorials/staff-management">
+    Users, roles, permissions, and time clock tracking.
+  </Card>
   <Card title="Products and catalog" icon="box" href="/tutorials/products-catalog">
     Manage products, categories, extras, and booking questions.
   </Card>
   <Card title="Scheduling and availability" icon="clock" href="/tutorials/scheduling-availability">
     Configure schedules, resources, and query availability.
   </Card>
-  <Card title="Racing and leaderboards" icon="flag-checkered" href="/tutorials/racing-leaderboards">
-    Manage heats, ingest lap data, and stream live timing.
-  </Card>
-  <Card title="Embed the booking widget" icon="window-maximize" href="/tutorials/embed-booking-widget">
-    Add a customer-facing booking flow to your website.
+  <Card title="Racing operations" icon="flag-checkered" href="/tutorials/racing-leaderboards">
+    Manage heats, ingest lap data, and configure tracks.
   </Card>
   <Card title="Memberships and loyalty" icon="id-card" href="/tutorials/memberships-loyalty">
     Enroll subscribers, manage plans, and run loyalty programs.
@@ -86,18 +62,6 @@ Step-by-step guides for common integration scenarios.
   <Card title="POS integration" icon="cash-register" href="/tutorials/pos-integration">
     Open tabs, add items, and process in-venue payments.
   </Card>
-  <Card title="Walk-ins and waitlist" icon="person-walking" href="/tutorials/walkins-waitlist">
-    Handle walk-in guests and manage waitlist queues.
-  </Card>
-  <Card title="Venue setup" icon="building" href="/tutorials/venue-setup">
-    Configure tenants, locations, and venue settings.
-  </Card>
-  <Card title="Staff management" icon="user-gear" href="/tutorials/staff-management">
-    Users, roles, permissions, and time clock tracking.
-  </Card>
-  <Card title="Waivers and participants" icon="file-signature" href="/tutorials/waivers-participants">
-    Digital waivers, signatures, and participant profiles.
-  </Card>
   <Card title="Communications" icon="envelope" href="/tutorials/communications">
     Email/SMS templates, automations, and notifications.
   </Card>
@@ -106,13 +70,19 @@ Step-by-step guides for common integration scenarios.
   </Card>
 </Columns>
 
-## API reference
+## Get started
 
-<Card
-  title="Browse all endpoints"
-  icon="terminal"
-  href="/api-reference/introduction"
-  horizontal
->
-  Full reference for 150+ endpoints across 22 resource groups.
-</Card>
+<Columns cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get your API key and make your first request.
+  </Card>
+  <Card title="Authentication" icon="lock" href="/authentication">
+    JWT tokens, API keys, and widget sessions.
+  </Card>
+  <Card title="Environments" icon="server" href="/environments">
+    Sandbox and production.
+  </Card>
+  <Card title="SDKs" icon="cube" href="/sdks">
+    Client libraries for Node.js, Python, and PHP.
+  </Card>
+</Columns>

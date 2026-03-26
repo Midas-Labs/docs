@@ -45,6 +45,18 @@
               "rate-limits",
               "versioning"
             ]
+          }
+        ]
+      },
+      {
+        "tab": "External API",
+        "openapi": "api-reference/openapi.yaml",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api-reference/introduction"
+            ]
           },
           {
             "group": "Tutorials",
@@ -52,31 +64,545 @@
               "tutorials/booking-integration",
               "tutorials/payment-processing",
               "tutorials/customer-management",
-              "tutorials/products-catalog",
-              "tutorials/scheduling-availability",
-              "tutorials/racing-leaderboards",
               "tutorials/embed-booking-widget",
-              "tutorials/memberships-loyalty",
-              "tutorials/promotions-gift-cards",
-              "tutorials/pos-integration",
               "tutorials/walkins-waitlist",
-              "tutorials/venue-setup",
-              "tutorials/staff-management",
               "tutorials/waivers-participants",
-              "tutorials/communications",
-              "tutorials/multi-venue-orgs"
+              "tutorials/racing-displays"
+            ]
+          },
+          {
+            "group": "Auth",
+            "expanded": false,
+            "pages": [
+              "POST /v1/auth/login",
+              "POST /v1/auth/refresh",
+              "POST /v1/auth/logout",
+              "GET /v1/auth/session",
+              "POST /v1/auth/password/reset-request",
+              "POST /v1/auth/password/reset",
+              "POST /v1/auth/mfa/enroll",
+              "POST /v1/auth/mfa/verify",
+              "DELETE /v1/auth/mfa",
+              "GET /v1/auth/mfa/status",
+              "POST /v1/auth/sso/{provider}/init",
+              "POST /v1/auth/sso/{provider}/callback",
+              "POST /v1/auth/sso/link",
+              "DELETE /v1/auth/sso/{provider}",
+              "GET /v1/auth/sso/providers",
+              "POST /v1/auth/tenant-switch"
+            ]
+          },
+          {
+            "group": "Customers",
+            "expanded": false,
+            "pages": [
+              "GET /v1/customers",
+              "POST /v1/customers",
+              "GET /v1/customers/search",
+              "GET /v1/customers/{id}",
+              "PUT /v1/customers/{id}",
+              "DELETE /v1/customers/{id}",
+              "GET /v1/customers/{id}/payment-methods",
+              "POST /v1/customers/{id}/payment-methods",
+              "DELETE /v1/customers/{id}/payment-methods/{paymentMethodId}",
+              "GET /v1/customers/{id}/credits",
+              "POST /v1/customers/{id}/credits"
+            ]
+          },
+          {
+            "group": "Participants",
+            "expanded": false,
+            "pages": [
+              "GET /v1/participants",
+              "POST /v1/participants",
+              "GET /v1/participants/{id}",
+              "PUT /v1/participants/{id}",
+              "DELETE /v1/participants/{id}"
+            ]
+          },
+          {
+            "group": "Waivers",
+            "expanded": false,
+            "pages": [
+              "GET /v1/waivers",
+              "POST /v1/waivers",
+              "GET /v1/waivers/{id}",
+              "PUT /v1/waivers/{id}",
+              "DELETE /v1/waivers/{id}",
+              "POST /v1/waivers/{id}/sign",
+              "GET /v1/waivers/{id}/signatures"
+            ]
+          },
+          {
+            "group": "Reviews",
+            "expanded": false,
+            "pages": [
+              "GET /v1/reviews",
+              "POST /v1/reviews",
+              "GET /v1/reviews/{id}",
+              "DELETE /v1/reviews/{id}"
+            ]
+          },
+          {
+            "group": "Booking",
+            "expanded": false,
+            "pages": [
+              "POST /v1/carts",
+              "GET /v1/carts/{id}",
+              "POST /v1/carts/{id}/items",
+              "PUT /v1/carts/{id}/items/{itemId}",
+              "DELETE /v1/carts/{id}/items/{itemId}",
+              "POST /v1/carts/{id}/checkout",
+              "GET /v1/orders",
+              "GET /v1/orders/{id}",
+              "POST /v1/orders/pay-first",
+              "GET /v1/bookings",
+              "GET /v1/bookings/{id}",
+              "PUT /v1/bookings/{id}",
+              "POST /v1/bookings/{id}/cancel",
+              "POST /v1/bookings/{id}/reschedule",
+              "POST /v1/bookings/{id}/check-in",
+              "POST /v1/bookings/reserve",
+              "POST /v1/bookings/{id}/confirm",
+              "POST /v1/bookings/{id}/decline",
+              "POST /v1/bookings/{id}/schedule",
+              "POST /v1/walk-in/check-in",
+              "POST /v1/walk-in/assign",
+              "POST /v1/walk-in/attach-booking"
+            ]
+          },
+          {
+            "group": "Payments",
+            "expanded": false,
+            "pages": [
+              "GET /v1/payments",
+              "POST /v1/payments",
+              "GET /v1/payments/{id}",
+              "POST /v1/payments/{id}/capture",
+              "POST /v1/payments/{id}/void",
+              "GET /v1/refunds",
+              "POST /v1/refunds",
+              "GET /v1/refunds/{id}"
+            ]
+          },
+          {
+            "group": "Racing",
+            "expanded": false,
+            "pages": [
+              "GET /v1/racing/heats",
+              "GET /v1/racing/heats/{id}",
+              "GET /v1/racing/heats/{id}/racers",
+              "GET /v1/racing/laps",
+              "GET /v1/racing/leaderboards",
+              "GET /v1/racing/leaderboards/{id}",
+              "GET /v1/racing/tracks",
+              "GET /v1/racing/tracks/{id}",
+              "GET /v1/racing/live"
+            ]
+          },
+          {
+            "group": "Promotions",
+            "expanded": false,
+            "pages": [
+              "POST /v1/promotions/validate",
+              "GET /v1/gift-cards/{id}",
+              "POST /v1/gift-cards/{id}/redeem"
+            ]
+          },
+          {
+            "group": "Widget",
+            "expanded": false,
+            "pages": [
+              "GET /v1/widget/config",
+              "GET /v1/widget/products",
+              "GET /v1/widget/availability",
+              "POST /v1/widget/checkout",
+              "POST /v1/widget/walk-in",
+              "POST /v1/widget/pay-first",
+              "POST /v1/widget/reserve",
+              "GET /v1/widget/lobby-display"
+            ]
+          },
+          {
+            "group": "Waitlist",
+            "expanded": false,
+            "pages": [
+              "POST /v1/waitlist",
+              "GET /v1/waitlist",
+              "GET /v1/waitlist/position/{id}",
+              "DELETE /v1/waitlist/{id}",
+              "POST /v1/waitlist/{id}/confirm"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "expanded": false,
+            "pages": [
+              "GET /v1/webhooks",
+              "POST /v1/webhooks",
+              "GET /v1/webhooks/{id}",
+              "PUT /v1/webhooks/{id}",
+              "DELETE /v1/webhooks/{id}",
+              "GET /v1/webhooks/{id}/deliveries",
+              "POST /v1/webhooks/{id}/test"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "Internal API",
         "openapi": "api-reference/openapi.yaml",
         "groups": [
           {
-            "group": "Overview",
+            "group": "Tutorials",
             "pages": [
-              "api-reference/introduction"
+              "tutorials/venue-setup",
+              "tutorials/staff-management",
+              "tutorials/products-catalog",
+              "tutorials/scheduling-availability",
+              "tutorials/racing-leaderboards",
+              "tutorials/memberships-loyalty",
+              "tutorials/promotions-gift-cards",
+              "tutorials/pos-integration",
+              "tutorials/communications",
+              "tutorials/multi-venue-orgs"
+            ]
+          },
+          {
+            "group": "Tenants",
+            "expanded": false,
+            "pages": [
+              "GET /v1/tenants",
+              "POST /v1/tenants",
+              "GET /v1/tenants/{id}",
+              "PUT /v1/tenants/{id}",
+              "GET /v1/tenants/{id}/settings",
+              "PUT /v1/tenants/{id}/settings"
+            ]
+          },
+          {
+            "group": "Locations",
+            "expanded": false,
+            "pages": [
+              "GET /v1/locations",
+              "POST /v1/locations",
+              "GET /v1/locations/{id}",
+              "PUT /v1/locations/{id}",
+              "DELETE /v1/locations/{id}"
+            ]
+          },
+          {
+            "group": "Users & Roles",
+            "expanded": false,
+            "pages": [
+              "GET /v1/users",
+              "POST /v1/users",
+              "GET /v1/users/{id}",
+              "PUT /v1/users/{id}",
+              "DELETE /v1/users/{id}",
+              "GET /v1/roles",
+              "POST /v1/roles",
+              "PUT /v1/roles/{id}",
+              "DELETE /v1/roles/{id}"
+            ]
+          },
+          {
+            "group": "Time Clock",
+            "expanded": false,
+            "pages": [
+              "GET /v1/time-clock",
+              "POST /v1/time-clock/clock-in",
+              "POST /v1/time-clock/{id}/clock-out",
+              "PUT /v1/time-clock/{id}"
+            ]
+          },
+          {
+            "group": "Products",
+            "expanded": false,
+            "pages": [
+              "GET /v1/products",
+              "POST /v1/products",
+              "GET /v1/products/{id}",
+              "PUT /v1/products/{id}",
+              "DELETE /v1/products/{id}",
+              "GET /v1/products/{id}/questions",
+              "POST /v1/products/{id}/questions",
+              "PUT /v1/products/{id}/questions/{questionId}",
+              "DELETE /v1/products/{id}/questions/{questionId}",
+              "GET /v1/categories",
+              "POST /v1/categories",
+              "GET /v1/categories/{id}",
+              "PUT /v1/categories/{id}",
+              "DELETE /v1/categories/{id}",
+              "GET /v1/extras",
+              "POST /v1/extras",
+              "GET /v1/extras/{id}",
+              "PUT /v1/extras/{id}",
+              "DELETE /v1/extras/{id}"
+            ]
+          },
+          {
+            "group": "Scheduling",
+            "expanded": false,
+            "pages": [
+              "GET /v1/schedules",
+              "POST /v1/schedules",
+              "GET /v1/schedules/{id}",
+              "PUT /v1/schedules/{id}",
+              "DELETE /v1/schedules/{id}",
+              "GET /v1/resources",
+              "POST /v1/resources",
+              "GET /v1/resources/{id}",
+              "PUT /v1/resources/{id}",
+              "DELETE /v1/resources/{id}",
+              "GET /v1/resource-types",
+              "POST /v1/resource-types",
+              "GET /v1/resource-types/{id}",
+              "PUT /v1/resource-types/{id}",
+              "GET /v1/availability-blocks",
+              "POST /v1/availability-blocks",
+              "GET /v1/availability-blocks/{id}",
+              "PUT /v1/availability-blocks/{id}",
+              "DELETE /v1/availability-blocks/{id}",
+              "GET /v1/availability",
+              "GET /v1/capacity-windows",
+              "POST /v1/capacity-windows",
+              "GET /v1/capacity-windows/{id}",
+              "PUT /v1/capacity-windows/{id}",
+              "DELETE /v1/capacity-windows/{id}",
+              "GET /v1/occupancy-sessions",
+              "POST /v1/occupancy-sessions/{id}/check-in",
+              "POST /v1/occupancy-sessions/{id}/check-out",
+              "GET /v1/hybrid-rules",
+              "POST /v1/hybrid-rules",
+              "GET /v1/hybrid-rules/{id}",
+              "PUT /v1/hybrid-rules/{id}",
+              "DELETE /v1/hybrid-rules/{id}",
+              "GET /v1/scheduling/feed"
+            ]
+          },
+          {
+            "group": "Racing",
+            "expanded": false,
+            "pages": [
+              "POST /v1/racing/heats",
+              "PUT /v1/racing/heats/{id}",
+              "POST /v1/racing/heats/{id}/start",
+              "POST /v1/racing/heats/{id}/finish",
+              "POST /v1/racing/heats/{id}/racers",
+              "DELETE /v1/racing/heats/{id}/racers/{racerId}",
+              "POST /v1/racing/laps",
+              "POST /v1/racing/tracks",
+              "PUT /v1/racing/tracks/{id}"
+            ]
+          },
+          {
+            "group": "Promotions & Gift Cards",
+            "expanded": false,
+            "pages": [
+              "GET /v1/promotions",
+              "POST /v1/promotions",
+              "GET /v1/promotions/{id}",
+              "PUT /v1/promotions/{id}",
+              "DELETE /v1/promotions/{id}",
+              "GET /v1/promotions/{id}/codes",
+              "POST /v1/promotions/{id}/codes",
+              "GET /v1/gift-cards",
+              "POST /v1/gift-cards",
+              "PUT /v1/gift-cards/{id}",
+              "POST /v1/gift-cards/{id}/topup",
+              "GET /v1/affiliates",
+              "POST /v1/affiliates",
+              "GET /v1/affiliates/{id}",
+              "PUT /v1/affiliates/{id}",
+              "DELETE /v1/affiliates/{id}",
+              "GET /v1/affiliates/{id}/referrals"
+            ]
+          },
+          {
+            "group": "Memberships & Loyalty",
+            "expanded": false,
+            "pages": [
+              "GET /v1/membership-types",
+              "POST /v1/membership-types",
+              "GET /v1/membership-types/{id}",
+              "PUT /v1/membership-types/{id}",
+              "DELETE /v1/membership-types/{id}",
+              "GET /v1/memberships",
+              "POST /v1/memberships",
+              "GET /v1/memberships/{id}",
+              "PUT /v1/memberships/{id}",
+              "POST /v1/memberships/{id}/cancel",
+              "POST /v1/memberships/{id}/renew",
+              "POST /v1/memberships/{id}/freeze",
+              "POST /v1/memberships/{id}/unfreeze",
+              "GET /v1/loyalty",
+              "POST /v1/loyalty",
+              "GET /v1/loyalty/{id}",
+              "PUT /v1/loyalty/{id}",
+              "GET /v1/loyalty/{id}/balance",
+              "GET /v1/loyalty/{id}/transactions",
+              "POST /v1/loyalty/{id}/award",
+              "POST /v1/loyalty/{id}/redeem"
+            ]
+          },
+          {
+            "group": "Communications",
+            "expanded": false,
+            "pages": [
+              "GET /v1/email-templates",
+              "POST /v1/email-templates",
+              "GET /v1/email-templates/{id}",
+              "PUT /v1/email-templates/{id}",
+              "DELETE /v1/email-templates/{id}",
+              "POST /v1/email-templates/{id}/send",
+              "GET /v1/sms-templates",
+              "POST /v1/sms-templates",
+              "GET /v1/sms-templates/{id}",
+              "PUT /v1/sms-templates/{id}",
+              "DELETE /v1/sms-templates/{id}",
+              "POST /v1/sms-templates/{id}/send",
+              "GET /v1/automations",
+              "POST /v1/automations",
+              "GET /v1/automations/{id}",
+              "PUT /v1/automations/{id}",
+              "DELETE /v1/automations/{id}",
+              "POST /v1/automations/{id}/activate",
+              "POST /v1/automations/{id}/deactivate",
+              "GET /v1/notifications",
+              "PUT /v1/notifications/{id}/read",
+              "GET /v1/notifications/stream"
+            ]
+          },
+          {
+            "group": "POS",
+            "expanded": false,
+            "pages": [
+              "GET /v1/pos/checks",
+              "POST /v1/pos/checks",
+              "GET /v1/pos/checks/{id}",
+              "POST /v1/pos/checks/{id}/items",
+              "PUT /v1/pos/checks/{id}/items/{itemId}",
+              "DELETE /v1/pos/checks/{id}/items/{itemId}",
+              "POST /v1/pos/checks/{id}/pay",
+              "POST /v1/pos/checks/{id}/void",
+              "GET /v1/pos/menu-layouts",
+              "POST /v1/pos/menu-layouts",
+              "GET /v1/pos/menu-layouts/{id}",
+              "PUT /v1/pos/menu-layouts/{id}",
+              "GET /v1/pos/devices",
+              "POST /v1/pos/devices",
+              "GET /v1/pos/devices/{id}",
+              "PUT /v1/pos/devices/{id}"
+            ]
+          },
+          {
+            "group": "Payment Configuration",
+            "expanded": false,
+            "pages": [
+              "GET /v1/tax-rates",
+              "POST /v1/tax-rates",
+              "GET /v1/tax-rates/{id}",
+              "PUT /v1/tax-rates/{id}",
+              "DELETE /v1/tax-rates/{id}",
+              "GET /v1/fee-rules",
+              "POST /v1/fee-rules",
+              "GET /v1/fee-rules/{id}",
+              "PUT /v1/fee-rules/{id}",
+              "DELETE /v1/fee-rules/{id}",
+              "GET /v1/payment-gateways",
+              "POST /v1/payment-gateways",
+              "GET /v1/payment-gateways/{id}",
+              "PUT /v1/payment-gateways/{id}",
+              "GET /v1/cash-drawers",
+              "POST /v1/cash-drawers",
+              "GET /v1/cash-drawers/{id}",
+              "PUT /v1/cash-drawers/{id}",
+              "POST /v1/cash-drawers/{id}/open",
+              "POST /v1/cash-drawers/{id}/close",
+              "GET /v1/cash-drawers/{id}/summary",
+              "GET /v1/gateway-configs",
+              "POST /v1/gateway-configs",
+              "GET /v1/gateway-configs/{id}",
+              "PUT /v1/gateway-configs/{id}",
+              "DELETE /v1/gateway-configs/{id}"
+            ]
+          },
+          {
+            "group": "Admin",
+            "expanded": false,
+            "pages": [
+              "GET /v1/admin/activity-log",
+              "GET /v1/admin/api-keys",
+              "POST /v1/admin/api-keys",
+              "GET /v1/admin/api-keys/{id}",
+              "PUT /v1/admin/api-keys/{id}",
+              "DELETE /v1/admin/api-keys/{id}",
+              "POST /v1/admin/api-keys/{id}/roll",
+              "GET /v1/admin/notes",
+              "POST /v1/admin/notes",
+              "GET /v1/admin/notes/{id}",
+              "PUT /v1/admin/notes/{id}",
+              "DELETE /v1/admin/notes/{id}",
+              "GET /v1/admin/integrations",
+              "PUT /v1/admin/integrations/{id}"
+            ]
+          },
+          {
+            "group": "Organizations",
+            "expanded": false,
+            "pages": [
+              "GET /v1/organizations",
+              "POST /v1/organizations",
+              "GET /v1/organizations/{id}",
+              "PUT /v1/organizations/{id}",
+              "GET /v1/organizations/{id}/tenant-groups",
+              "POST /v1/organizations/{id}/tenant-groups",
+              "GET /v1/organizations/{id}/tenant-groups/{groupId}",
+              "PUT /v1/organizations/{id}/tenant-groups/{groupId}",
+              "DELETE /v1/organizations/{id}/tenant-groups/{groupId}",
+              "POST /v1/organizations/{id}/tenant-groups/{groupId}/tenants",
+              "DELETE /v1/organizations/{id}/tenant-groups/{groupId}/tenants/{tenantId}",
+              "GET /v1/organizations/{id}/tree",
+              "GET /v1/organizations/{id}/settings",
+              "PUT /v1/organizations/{id}/settings",
+              "POST /v1/organizations/{id}/settings/push",
+              "GET /v1/organizations/{id}/reports"
+            ]
+          },
+          {
+            "group": "Billing",
+            "expanded": false,
+            "pages": [
+              "GET /v1/billing/subscription",
+              "GET /v1/billing/invoices",
+              "GET /v1/billing/invoices/{id}",
+              "GET /v1/billing/invoices/{id}/pdf",
+              "GET /v1/billing/usage",
+              "GET /v1/billing/payment-method",
+              "PUT /v1/billing/payment-method",
+              "POST /v1/billing/upgrade",
+              "GET /v1/admin/plans",
+              "POST /v1/admin/plans",
+              "GET /v1/admin/plans/{id}",
+              "PUT /v1/admin/plans/{id}",
+              "DELETE /v1/admin/plans/{id}",
+              "GET /v1/admin/subscriptions",
+              "GET /v1/admin/subscriptions/{id}",
+              "PUT /v1/admin/subscriptions/{id}",
+              "POST /v1/admin/subscriptions/{id}/cancel",
+              "GET /v1/admin/invoices",
+              "GET /v1/admin/invoices/{id}",
+              "POST /v1/admin/invoices/{id}/finalize",
+              "POST /v1/admin/invoices/{id}/void",
+              "POST /v1/admin/credit-notes",
+              "GET /v1/admin/usage",
+              "GET /v1/admin/payment-processors",
+              "POST /v1/admin/payment-processors",
+              "GET /v1/admin/payment-processors/{id}",
+              "PUT /v1/admin/payment-processors/{id}",
+              "GET /v1/admin/organizations/{orgId}/sso",
+              "PUT /v1/admin/organizations/{orgId}/sso"
             ]
           }
         ]

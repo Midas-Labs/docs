@@ -1,0 +1,95 @@
+---
+title: "Racing displays and live timing"
+description: "Build leaderboard displays, live timing boards, and race result pages"
+---
+
+The racing API exposes read-only endpoints for displaying leaderboards, race results, and live timing data. Use these to power lobby screens, websites, and mobile apps.
+
+<Note>This guide covers reading racing data. For managing heats, ingesting lap data, and configuring tracks, see the internal [Racing and leaderboards](/tutorials/racing-leaderboards) guide.</Note>
+
+## Leaderboards
+
+### List available leaderboards
+
+```bash
+curl https://api.platform.io/v1/racing/leaderboards \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Get a leaderboard with entries
+
+```bash
+curl "https://api.platform.io/v1/racing/leaderboards/lb_weekly?expand[]=entries" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+Display the results on a screen or web page using the entries array, which is sorted by best lap time.
+
+## Race results
+
+### Get a heat and its racers
+
+```bash
+curl "https://api.platform.io/v1/racing/heats/heat_abc?expand[]=racers" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Query lap times for a heat
+
+```bash
+curl "https://api.platform.io/v1/racing/laps?heat_id=heat_abc&limit=100" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+### Query a racer's personal history
+
+```bash
+curl "https://api.platform.io/v1/racing/laps?racer_id=hracer_xyz&limit=50" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Live timing feed
+
+Subscribe to real-time race events via Server-Sent Events for lobby displays and live timing boards:
+
+```javascript
+const source = new EventSource(
+  "https://api.platform.io/v1/racing/live",
+  { headers: { "Authorization": "Bearer sk_test_your_key_here" } }
+);
+
+source.addEventListener("lap_completed", (event) => {
+  const lap = JSON.parse(event.data);
+  updateTimingBoard(lap.racer_id, lap.lap_number, lap.lap_time_ms);
+});
+
+source.addEventListener("heat_started", (event) => {
+  const heat = JSON.parse(event.data);
+  showHeatBanner(heat.heat_id, heat.track_id);
+});
+
+source.addEventListener("heat_finished", (event) => {
+  const heat = JSON.parse(event.data);
+  showResults(heat.heat_id);
+});
+```
+
+### Event types
+
+| Event | Data | Use case |
+|-------|------|----------|
+| `heat_started` | `heat_id`, `track_id`, `started_at` | Show "race in progress" on lobby display |
+| `lap_completed` | `heat_id`, `racer_id`, `lap_number`, `lap_time_ms` | Update live timing board |
+| `heat_finished` | `heat_id`, `finished_at` | Show final results |
+
+## Track information
+
+```bash
+curl https://api.platform.io/v1/racing/tracks \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+```bash
+curl https://api.platform.io/v1/racing/tracks/trk_main \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
