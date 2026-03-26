@@ -1,33 +1,86 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: "Introduction"
+description: "REST API for the Unified Platform — core operations, scheduling, billing, and more."
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+The Unified Platform API uses standard HTTP verbs and status codes, accepts and returns JSON, and follows consistent patterns across all resources.
 
-## Welcome
+## Base URL
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
-
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+```
+https://api.platform.io/v1/
+```
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+| Method | Header | Use case |
+|--------|--------|----------|
+| JWT Bearer | `Authorization: Bearer <jwt>` | User sessions (RS256, 15 min access / 7 day refresh) |
+| API Key | `Authorization: Bearer sk_live_...` | Server-to-server (`sk_test_` for sandbox) |
+| Widget Session | `X-Widget-Session: ws_...` | Embeddable booking widget (30 min TTL) |
+
+JWT claims include `tid` (tenant), `lid` (location), and `roles[]`.
+
+## Pagination
+
+List endpoints use ID-based cursor pagination:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `limit` | integer | Items per page (1–100, default 10) |
+| `starting_after` | string | Object ID — page after this object |
+| `ending_before` | string | Object ID — page before this object |
+
+Response envelope:
 
 ```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+{
+  "object": "list",
+  "url": "/v1/customers",
+  "has_more": true,
+  "data": [...]
+}
 ```
+
+## Expanding objects
+
+Related objects return as IDs by default. Expand inline with `?expand[]=field`:
+
+```
+GET /v1/orders/ord_123?expand[]=customer&expand[]=bookings
+```
+
+Max depth: 4 levels.
+
+## Errors
+
+```json
+{
+  "error": {
+    "type": "validation_error",
+    "code": "BOOKING_SLOT_UNAVAILABLE",
+    "message": "The requested time slot is no longer available.",
+    "param": "slot_id",
+    "request_id": "req_abc123",
+    "doc_url": "https://docs.platform.io/errors/BOOKING_SLOT_UNAVAILABLE"
+  }
+}
+```
+
+Error types: `api_error`, `validation_error`, `business_error`, `idempotency_error`.
+
+## Idempotency
+
+POST requests accept an `Idempotency-Key` header (UUID). Keys are cached for 24 hours. Reusing a key with different parameters returns 409 Conflict.
+
+## Versioning
+
+Primary versioning uses the URL path (`/v1/`). Per-request override via `X-API-Version` header.
+
+## Request IDs
+
+Every response includes a `Request-Id` header. Include this when contacting support.
+
+## Metadata
+
+Most mutable resources accept `metadata` — up to 50 key-value string pairs for storing structured data.

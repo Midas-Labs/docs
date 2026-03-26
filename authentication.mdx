@@ -1,0 +1,106 @@
+---
+title: "Authentication"
+description: "Authenticate requests with JWT tokens, API keys, or widget sessions"
+---
+
+The API supports three authentication methods. Choose based on your use case.
+
+| Method | Header | Use case |
+|--------|--------|----------|
+| API Key | `Authorization: Bearer sk_live_...` | Server-to-server integrations |
+| JWT Bearer | `Authorization: Bearer <jwt>` | User sessions in your application |
+| Widget Session | `X-Widget-Session: ws_...` | Embeddable booking widget |
+
+## API keys
+
+API keys are the simplest way to authenticate. Each key is scoped to a single tenant.
+
+```bash
+curl https://api.platform.io/v1/customers \
+  -H "Authorization: Bearer sk_live_your_key_here"
+```
+
+- **Live keys** (`sk_live_`) access production data.
+- **Test keys** (`sk_test_`) access the sandbox. Use these during development.
+
+Manage keys at **Settings > API Keys** in your dashboard, or via the [API keys endpoint](/api-reference/introduction).
+
+<Warning>
+  API keys carry full access to your tenant's data. Never expose them in client-side code, mobile apps, or public repositories.
+</Warning>
+
+## JWT bearer tokens
+
+For user-facing applications, authenticate users with JWT tokens issued by the login endpoint.
+
+### Login flow
+
+```bash
+curl -X POST https://api.platform.io/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "your_password"
+  }'
+```
+
+The response includes an access token and a refresh token:
+
+```json
+{
+  "access_token": "eyJhbGciOiJSUzI1NiIs...",
+  "refresh_token": "rt_abc123...",
+  "expires_in": 900
+}
+```
+
+### Token lifecycle
+
+- **Access tokens** expire after 15 minutes. Include them in the `Authorization` header.
+- **Refresh tokens** are valid for 7 days. Exchange them for new access tokens via `POST /v1/auth/refresh`.
+- **Token rotation**: each refresh invalidates the previous refresh token.
+
+### JWT claims
+
+Access tokens are RS256-signed JWTs containing:
+
+| Claim | Description |
+|-------|-------------|
+| `tid` | Tenant ID |
+| `lid` | Location ID |
+| `roles[]` | Array of role identifiers |
+
+### MFA
+
+If the organization requires multi-factor authentication, the login response returns an MFA challenge instead of tokens. Complete it with `POST /v1/auth/mfa/verify`.
+
+## Widget sessions
+
+The embeddable booking widget uses short-lived session tokens.
+
+```bash
+curl https://api.platform.io/v1/widget/products \
+  -H "X-Widget-Session: ws_abc123"
+```
+
+Widget sessions have a 30-minute TTL and are scoped to public booking operations only.
+
+## Error responses
+
+Authentication failures return a `401` status:
+
+```json
+{
+  "error": {
+    "type": "api_error",
+    "code": "UNAUTHORIZED",
+    "message": "Invalid or expired authentication token.",
+    "request_id": "req_abc123"
+  }
+}
+```
+
+Common causes:
+- Expired or revoked access token — refresh it with `POST /v1/auth/refresh`.
+- Invalid API key — verify the key in your dashboard.
+- Missing `Authorization` header.

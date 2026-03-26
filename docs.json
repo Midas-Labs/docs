@@ -1,11 +1,21 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "ClubSpeed",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#df272d",
+    "light": "#f04349",
+    "dark": "#b81e23"
+  },
+  "font": {
+    "headings": {
+      "family": "Open Sans",
+      "weight": 700
+    },
+    "body": {
+      "family": "Open Sans",
+      "weight": 400
+    }
   },
   "favicon": "/favicon.svg",
   "navigation": {
@@ -18,51 +28,30 @@
             "pages": [
               "index",
               "quickstart",
-              "development"
+              "authentication"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Core concepts",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
-          },
-          {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "pagination",
+              "expanding-objects",
+              "errors",
+              "idempotency",
+              "webhooks",
+              "metadata"
             ]
           }
         ]
       },
       {
         "tab": "API reference",
+        "openapi": "api-reference/openapi.yaml",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Overview",
             "pages": [
               "api-reference/introduction"
-            ]
-          },
-          {
-            "group": "Endpoint examples",
-            "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
             ]
           }
         ]
@@ -71,33 +60,33 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
+          "anchor": "ClubSpeed.com",
+          "href": "https://clubspeed.com",
+          "icon": "globe"
         },
         {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "Support",
+          "href": "https://clubspeed.com/support",
+          "icon": "life-ring"
         }
       ]
     }
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/logo/light.png",
+    "dark": "/logo/dark.png"
   },
   "navbar": {
     "links": [
       {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "label": "ClubSpeed.com",
+        "href": "https://clubspeed.com"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "href": "https://clubspeed.com/login"
     }
   },
   "contextual": {
@@ -114,9 +103,11 @@
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "x": "https://x.com/Club_Speed",
+      "linkedin": "https://linkedin.com/company/clubspeed",
+      "instagram": "https://instagram.com/club_speed",
+      "facebook": "https://facebook.com/ClubSpeed",
+      "youtube": "https://youtube.com/channel/UCqD4K8QlxqmrgxsWu7qydlA"
     }
   }
 }

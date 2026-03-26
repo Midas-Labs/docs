@@ -1,0 +1,68 @@
+---
+title: "Expanding objects"
+description: "Inline related objects in a single API request"
+---
+
+By default, related objects are returned as IDs. Use the `expand[]` parameter to inline the full object in the response, reducing the number of API calls you need to make.
+
+## Basic usage
+
+```bash
+curl "https://api.platform.io/v1/orders/ord_abc123?expand[]=customer" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+Without expansion, the `customer` field returns an ID:
+
+```json
+{
+  "id": "ord_abc123",
+  "object": "order",
+  "customer": "cus_def456"
+}
+```
+
+With `?expand[]=customer`, the full object is inlined:
+
+```json
+{
+  "id": "ord_abc123",
+  "object": "order",
+  "customer": {
+    "id": "cus_def456",
+    "object": "customer",
+    "first_name": "Jane",
+    "last_name": "Doe",
+    "email": "jane@example.com"
+  }
+}
+```
+
+## Multiple expansions
+
+Expand several fields in a single request:
+
+```bash
+curl "https://api.platform.io/v1/orders/ord_abc123?expand[]=customer&expand[]=bookings" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Nested expansions
+
+Expand nested related objects using dot notation, up to 4 levels deep:
+
+```bash
+curl "https://api.platform.io/v1/orders/ord_abc123?expand[]=bookings.product" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+<Note>Expanding deeply nested objects increases response size and latency. Only expand what you need.</Note>
+
+## Expansions on list endpoints
+
+The `expand[]` parameter also works on list endpoints. The expansion applies to every object in the `data` array:
+
+```bash
+curl "https://api.platform.io/v1/orders?expand[]=customer&limit=10" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```

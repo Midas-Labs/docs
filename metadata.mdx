@@ -1,0 +1,63 @@
+---
+title: "Metadata"
+description: "Attach custom key-value data to API resources"
+---
+
+Most mutable resources accept a `metadata` field — a map of up to 50 string key-value pairs. Use metadata to store structured information from your own system alongside ClubSpeed resources.
+
+## Setting metadata
+
+Include the `metadata` object when creating or updating a resource:
+
+```bash
+curl -X POST https://api.platform.io/v1/customers \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "first_name": "Jane",
+    "last_name": "Doe",
+    "email": "jane@example.com",
+    "metadata": {
+      "crm_id": "SF-10042",
+      "segment": "vip",
+      "source": "website"
+    }
+  }'
+```
+
+## Updating metadata
+
+Pass the full `metadata` object in an update request. New keys are added, existing keys are updated, and keys set to `""` (empty string) are removed:
+
+```bash
+curl -X PUT https://api.platform.io/v1/customers/cus_abc123 \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "metadata": {
+      "segment": "enterprise",
+      "source": ""
+    }
+  }'
+```
+
+After this request:
+- `crm_id` remains `"SF-10042"` (unchanged)
+- `segment` is updated to `"enterprise"`
+- `source` is removed
+
+## Constraints
+
+| Rule | Limit |
+|------|-------|
+| Maximum keys | 50 per resource |
+| Key length | Up to 40 characters |
+| Value length | Up to 500 characters |
+| Allowed types | Strings only |
+
+## Use cases
+
+- **CRM sync** — store external system IDs to link records across platforms.
+- **Segmentation** — tag customers with categories for reporting.
+- **Tracking** — record attribution data like referral source or campaign ID.
+- **Internal notes** — attach operational context without using a separate system.

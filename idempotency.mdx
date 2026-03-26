@@ -1,0 +1,57 @@
+---
+title: "Idempotency"
+description: "Safely retry requests without creating duplicate resources"
+---
+
+Network failures happen. Idempotency keys let you safely retry `POST` requests without creating duplicate records.
+
+## How it works
+
+Include an `Idempotency-Key` header with a unique identifier (UUID recommended) on any `POST` request:
+
+```bash
+curl -X POST https://api.platform.io/v1/orders \
+  -H "Authorization: Bearer sk_test_your_key_here" \
+  -H "Idempotency-Key: 550e8400-e29b-41d4-a716-446655440000" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customer": "cus_abc123",
+    "items": [{"product": "prod_xyz", "quantity": 1}]
+  }'
+```
+
+If the same `Idempotency-Key` is sent again with identical parameters, the API returns the original response without creating a duplicate.
+
+## Key rules
+
+| Rule | Detail |
+|------|--------|
+| **Cache duration** | Keys are cached for 24 hours |
+| **Scope** | Keys are scoped to your API key |
+| **Format** | Any string up to 255 characters (UUID recommended) |
+| **Parameter mismatch** | Reusing a key with different parameters returns `409 Conflict` |
+
+## Conflict errors
+
+If you reuse a key with different request parameters:
+
+```json
+{
+  "error": {
+    "type": "idempotency_error",
+    "code": "IDEMPOTENCY_KEY_REUSE",
+    "message": "This idempotency key was already used with different parameters.",
+    "request_id": "req_abc123"
+  }
+}
+```
+
+## When to use
+
+Use idempotency keys on any `POST` request that creates resources or triggers side effects:
+
+- Creating orders and bookings
+- Processing payments and refunds
+- Sending communications
+
+`GET`, `PUT`, and `DELETE` requests are inherently idempotent and do not require this header.

@@ -1,0 +1,81 @@
+---
+title: "Webhooks"
+description: "Receive real-time event notifications via HTTP callbacks"
+---
+
+Webhooks notify your application when events happen in ClubSpeed — a booking is confirmed, a payment is captured, a customer is created, and more. Instead of polling the API, register a URL and receive events as they occur.
+
+## Setting up webhooks
+
+<Steps>
+<Step title="Register a webhook endpoint">
+  Create a webhook via the API:
+
+  ```bash
+  curl -X POST https://api.platform.io/v1/webhooks \
+    -H "Authorization: Bearer sk_live_your_key_here" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "url": "https://your-app.com/webhooks/clubspeed",
+      "events": ["booking.confirmed", "payment.captured", "customer.created"]
+    }'
+  ```
+
+  You can also manage webhooks from **Settings > Webhooks** in your dashboard.
+</Step>
+
+<Step title="Handle incoming events">
+  Your endpoint receives `POST` requests with an event payload:
+
+  ```json
+  {
+    "id": "evt_abc123",
+    "object": "event",
+    "type": "booking.confirmed",
+    "created_at": "2025-03-15T14:30:00Z",
+    "data": {
+      "id": "bkg_xyz789",
+      "object": "booking",
+      "customer": "cus_def456",
+      "product": "prod_abc",
+      "start_time": "2025-03-16T10:00:00Z"
+    }
+  }
+  ```
+</Step>
+
+<Step title="Respond with 2xx">
+  Return a `200` status code within 30 seconds to acknowledge receipt. Any other status triggers a retry.
+</Step>
+</Steps>
+
+## Retry behavior
+
+Failed deliveries are retried with exponential backoff:
+
+| Attempt | Delay |
+|---------|-------|
+| 1 | Immediate |
+| 2 | 5 minutes |
+| 3 | 30 minutes |
+| 4 | 2 hours |
+| 5 | 24 hours |
+
+After 5 failed attempts, the delivery is marked as failed. View delivery history via `GET /v1/webhooks/{id}/deliveries`.
+
+## Testing webhooks
+
+Send a test event to your endpoint without triggering real data changes:
+
+```bash
+curl -X POST https://api.platform.io/v1/webhooks/whk_abc123/test \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+<Tip>Use a tool like [ngrok](https://ngrok.com) to expose a local development server for testing webhook deliveries.</Tip>
+
+## Best practices
+
+- **Respond quickly** — do heavy processing asynchronously after returning `200`.
+- **Handle duplicates** — the same event may be delivered more than once. Use the event `id` to deduplicate.
+- **Verify the source** — validate that incoming requests originate from ClubSpeed by checking the signature header.

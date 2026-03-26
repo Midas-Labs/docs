@@ -1,0 +1,80 @@
+---
+title: "Pagination"
+description: "Navigate large result sets with cursor-based pagination"
+---
+
+List endpoints return paginated results using ID-based cursors. This approach provides stable pagination even when records are added or removed between requests.
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `limit` | integer | Items per page (1–100, default 10) |
+| `starting_after` | string | Return items after this object ID |
+| `ending_before` | string | Return items before this object ID |
+
+## Response format
+
+Every list endpoint returns the same envelope:
+
+```json
+{
+  "object": "list",
+  "url": "/v1/customers",
+  "has_more": true,
+  "data": [
+    { "id": "cus_abc123", "object": "customer", "..." : "..." },
+    { "id": "cus_def456", "object": "customer", "..." : "..." }
+  ]
+}
+```
+
+- `has_more` — `true` if additional results exist beyond this page.
+- `data` — array of objects, ordered by creation time (newest first by default).
+
+## Paginating forward
+
+To fetch the next page, pass the `id` of the last item in `data` as `starting_after`:
+
+```bash
+curl "https://api.platform.io/v1/customers?limit=10&starting_after=cus_def456" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Paginating backward
+
+To fetch the previous page, pass the `id` of the first item in `data` as `ending_before`:
+
+```bash
+curl "https://api.platform.io/v1/customers?limit=10&ending_before=cus_abc123" \
+  -H "Authorization: Bearer sk_test_your_key_here"
+```
+
+## Iterating all records
+
+To process every record, loop until `has_more` is `false`:
+
+```python
+customers = []
+has_more = True
+starting_after = None
+
+while has_more:
+    params = {"limit": 100}
+    if starting_after:
+        params["starting_after"] = starting_after
+
+    response = requests.get(
+        "https://api.platform.io/v1/customers",
+        headers={"Authorization": "Bearer sk_test_your_key_here"},
+        params=params
+    )
+    page = response.json()
+    customers.extend(page["data"])
+    has_more = page["has_more"]
+
+    if page["data"]:
+        starting_after = page["data"][-1]["id"]
+```
+
+<Note>Use the maximum `limit` of 100 when iterating all records to minimize the number of requests.</Note>
